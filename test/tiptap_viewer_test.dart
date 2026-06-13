@@ -47,6 +47,74 @@ bool _hasWidgetSpan(WidgetTester tester) {
   return false;
 }
 
+/// Counts rendered [SizedBox] widgets whose height equals [height].
+int _countSizedBoxesOfHeight(WidgetTester tester, double height) {
+  return tester
+      .widgetList<SizedBox>(find.byType(SizedBox))
+      .where((b) => b.height == height)
+      .length;
+}
+
+/// Two paragraphs separated by an intentionally empty paragraph (spacer).
+const Map<String, dynamic> _emptyParagraphDoc = <String, dynamic>{
+  'type': 'doc',
+  'content': <Map<String, dynamic>>[
+    <String, dynamic>{
+      'type': 'paragraph',
+      'content': <Map<String, dynamic>>[
+        <String, dynamic>{'type': 'text', 'text': 'Above'},
+      ],
+    },
+    <String, dynamic>{'type': 'paragraph'},
+    <String, dynamic>{
+      'type': 'paragraph',
+      'content': <Map<String, dynamic>>[
+        <String, dynamic>{'type': 'text', 'text': 'Below'},
+      ],
+    },
+  ],
+};
+
+/// A bullet item whose content is a paragraph followed by a nested bullet list
+/// — the shape that previously got pushed apart by paragraphSpacing.
+const Map<String, dynamic> _nestedListDoc = <String, dynamic>{
+  'type': 'doc',
+  'content': <Map<String, dynamic>>[
+    <String, dynamic>{
+      'type': 'bulletList',
+      'content': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'type': 'listItem',
+          'content': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'type': 'paragraph',
+              'content': <Map<String, dynamic>>[
+                <String, dynamic>{'type': 'text', 'text': 'Parent'},
+              ],
+            },
+            <String, dynamic>{
+              'type': 'bulletList',
+              'content': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'type': 'listItem',
+                  'content': <Map<String, dynamic>>[
+                    <String, dynamic>{
+                      'type': 'paragraph',
+                      'content': <Map<String, dynamic>>[
+                        <String, dynamic>{'type': 'text', 'text': 'Child'},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
 /// A document containing a single mention, for isolating mention behavior.
 const Map<String, dynamic> _mentionOnlyDoc = <String, dynamic>{
   'type': 'doc',
@@ -257,6 +325,67 @@ void main() {
         ),
       );
       expect(_spanStyle(tester, 'bold')?.fontWeight, FontWeight.w900);
+    });
+  });
+
+  group('empty paragraphs', () {
+    // A baseTextStyle with a clean line height makes the one-line spacer
+    // (fontSize * height = 20) easy to find and distinct from paragraphSpacing.
+    testWidgets('are stripped by default', (tester) async {
+      await _pump(
+        tester,
+        const TiptapViewer(
+          document: _emptyParagraphDoc,
+          selectable: false,
+          theme: TiptapViewerTheme(
+            baseTextStyle: TextStyle(fontSize: 20, height: 1.0),
+          ),
+        ),
+      );
+      // Both lines still render; the blank-line spacer is gone.
+      expect(find.text('Above'), findsOneWidget);
+      expect(find.text('Below'), findsOneWidget);
+      expect(_countSizedBoxesOfHeight(tester, 20.0), 0);
+    });
+
+    testWidgets('render as a one-line spacer when enabled', (tester) async {
+      await _pump(
+        tester,
+        const TiptapViewer(
+          document: _emptyParagraphDoc,
+          selectable: false,
+          theme: TiptapViewerTheme(
+            baseTextStyle: TextStyle(fontSize: 20, height: 1.0),
+            renderEmptyParagraphs: true,
+          ),
+        ),
+      );
+      expect(find.text('Above'), findsOneWidget);
+      expect(find.text('Below'), findsOneWidget);
+      expect(_countSizedBoxesOfHeight(tester, 20.0), 1);
+    });
+  });
+
+  group('nested lists', () {
+    testWidgets('use the tighter list gap, not paragraphSpacing', (tester) async {
+      // Distinct values so the gap actually used is unambiguous.
+      await _pump(
+        tester,
+        const TiptapViewer(
+          document: _nestedListDoc,
+          selectable: false,
+          theme: TiptapViewerTheme(
+            paragraphSpacing: 30,
+            listItemSpacing: 7,
+          ),
+        ),
+      );
+      expect(find.text('Parent'), findsOneWidget);
+      expect(find.text('Child'), findsOneWidget);
+      // The gap before the nested list is listItemSpacing...
+      expect(_countSizedBoxesOfHeight(tester, 7.0), 1);
+      // ...and paragraphSpacing never breaks the list up.
+      expect(_countSizedBoxesOfHeight(tester, 30.0), 0);
     });
   });
 

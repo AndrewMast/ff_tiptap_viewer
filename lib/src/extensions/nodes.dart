@@ -91,7 +91,7 @@ class ListItem extends TiptapBlockExtension {
   Widget buildBlock(TiptapRenderer r, TiptapNode node) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
-        children: r.buildBlockChildren(node.content),
+        children: r.buildBlockChildren(node.content, inListItem: true),
       );
 }
 
@@ -141,7 +141,7 @@ abstract class _ListBase extends TiptapBlockExtension {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
-            children: r.buildBlockChildren(item.content),
+            children: r.buildBlockChildren(item.content, inListItem: true),
           ),
         ),
       ],

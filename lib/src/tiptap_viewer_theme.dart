@@ -15,6 +15,14 @@ class TiptapViewerTheme {
   /// Vertical gap inserted between consecutive block siblings.
   final double paragraphSpacing;
 
+  /// Whether empty paragraphs render at all.
+  ///
+  /// When false (default), empty paragraphs are stripped entirely: they produce
+  /// no widget and add no surrounding spacing, collapsing the gap they would
+  /// have created. When true, an empty paragraph renders as a single blank line
+  /// — the way the TipTap editor shows a deliberate vertical gap.
+  final bool renderEmptyParagraphs;
+
   /// Weight applied by the `bold` mark.
   final FontWeight boldWeight;
 
@@ -33,7 +41,9 @@ class TiptapViewerTheme {
   /// Left indent applied to a list level.
   final double listIndent;
 
-  /// Vertical gap between list items.
+  /// Vertical gap between list items. Also used for the gap between a list
+  /// item's own content and a list nested inside it, so a nested list stays
+  /// tight to its parent instead of being pushed away by [paragraphSpacing].
   final double listItemSpacing;
 
   /// Horizontal gap between a list marker and its content.
@@ -62,14 +72,15 @@ class TiptapViewerTheme {
   const TiptapViewerTheme({
     this.baseTextStyle =
         const TextStyle(fontSize: 16, height: 1.4, color: Color(0xFF1A1A1A)),
-    this.paragraphSpacing = 12.0,
+    this.paragraphSpacing = 8.0,
+    this.renderEmptyParagraphs = false,
     this.boldWeight = FontWeight.w700,
     this.blockquoteBorderColor = const Color(0xFFCCCCCC),
     this.blockquoteBorderWidth = 4.0,
     this.blockquotePadding =
         const EdgeInsets.only(left: 12, top: 4, bottom: 4),
     this.bulletGlyph = '•',
-    this.listIndent = 20.0,
+    this.listIndent = 14.0,
     this.listItemSpacing = 4.0,
     this.listMarkerGap = 8.0,
     this.orderedNumberStyle,
@@ -98,6 +109,7 @@ class TiptapViewerTheme {
   TiptapViewerTheme copyWith({
     TextStyle? baseTextStyle,
     double? paragraphSpacing,
+    bool? renderEmptyParagraphs,
     FontWeight? boldWeight,
     Color? blockquoteBorderColor,
     double? blockquoteBorderWidth,
@@ -116,6 +128,7 @@ class TiptapViewerTheme {
     return TiptapViewerTheme(
       baseTextStyle: baseTextStyle ?? this.baseTextStyle,
       paragraphSpacing: paragraphSpacing ?? this.paragraphSpacing,
+      renderEmptyParagraphs: renderEmptyParagraphs ?? this.renderEmptyParagraphs,
       boldWeight: boldWeight ?? this.boldWeight,
       blockquoteBorderColor: blockquoteBorderColor ?? this.blockquoteBorderColor,
       blockquoteBorderWidth: blockquoteBorderWidth ?? this.blockquoteBorderWidth,

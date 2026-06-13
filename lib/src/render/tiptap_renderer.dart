@@ -60,11 +60,24 @@ class TiptapRenderer {
 
   /// Builds the block children of [nodes], inserting [TiptapViewerTheme.paragraphSpacing]
   /// between consecutive blocks. Empty paragraphs are themselves blank-line
-  /// spacers, so no extra spacing is added on either side of them.
-  List<Widget> buildBlockChildren(List<TiptapNode> nodes) {
+  /// spacers, so no extra spacing is added on either side of them — unless
+  /// [TiptapViewerTheme.renderEmptyParagraphs] is false, in which case they are
+  /// stripped before they reach the layout.
+  ///
+  /// When [inListItem] is true (the content of a list item), the gap adjacent to
+  /// a nested list uses the tighter [TiptapViewerTheme.listItemSpacing] instead,
+  /// so a sub-list stays attached to its parent item rather than reading as a
+  /// separate block.
+  List<Widget> buildBlockChildren(List<TiptapNode> nodes,
+      {bool inListItem = false}) {
     final widgets = <Widget>[];
     TiptapNode? previous;
     for (final node in nodes) {
+      // With empty paragraphs disabled, blank paragraphs are dropped wholesale:
+      // no spacer widget and no surrounding gap, collapsing the line entirely.
+      if (!theme.renderEmptyParagraphs && _isBlankParagraph(node)) {
+        continue;
+      }
       final widget = buildBlock(node);
       if (widget == null) {
         continue;
@@ -72,7 +85,10 @@ class TiptapRenderer {
       if (widgets.isNotEmpty &&
           !_isBlankParagraph(node) &&
           !_isBlankParagraph(previous)) {
-        widgets.add(SizedBox(height: theme.paragraphSpacing));
+        final tight =
+            inListItem && (_isListBlock(node) || _isListBlock(previous));
+        widgets.add(SizedBox(
+            height: tight ? theme.listItemSpacing : theme.paragraphSpacing));
       }
       widgets.add(widget);
       previous = node;
@@ -83,6 +99,10 @@ class TiptapRenderer {
   /// Whether [node] is an empty paragraph (rendered as a one-line spacer).
   bool _isBlankParagraph(TiptapNode? node) =>
       node != null && node.type == 'paragraph' && node.content.isEmpty;
+
+  /// Whether [node] is a list block (bullet or ordered).
+  bool _isListBlock(TiptapNode? node) =>
+      node != null && (node.type == 'bulletList' || node.type == 'orderedList');
 
   /// Builds a single block widget, or `null` when the node is stripped.
   Widget? buildBlock(TiptapNode node) {

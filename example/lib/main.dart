@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:ff_tiptap_viewer/ff_tiptap_viewer.dart';
 
@@ -7,9 +5,30 @@ import 'fake_flutter_flow_theme.dart';
 
 void main() => runApp(const ExampleApp());
 
-/// A document exercising every node/mark, stacked marks, an empty paragraph,
-/// a nested ordered list, a blockquote, and a mention.
-const Map<String, dynamic> kSampleDoc = <String, dynamic>{
+/// Builds a paragraph node from a flat list of inline children.
+Map<String, dynamic> _p(List<Map<String, dynamic>> inline) =>
+    <String, dynamic>{'type': 'paragraph', 'content': inline};
+
+/// Builds a plain text inline node.
+Map<String, dynamic> _t(String text) =>
+    <String, dynamic>{'type': 'text', 'text': text};
+
+/// Builds a list item wrapping a single line of plain text, plus any nested
+/// block content (e.g. a sub-list) so indentation levels are easy to see.
+Map<String, dynamic> _li(String text,
+        [List<Map<String, dynamic>> nested = const <Map<String, dynamic>>[]]) =>
+    <String, dynamic>{
+      'type': 'listItem',
+      'content': <Map<String, dynamic>>[
+        _p(<Map<String, dynamic>>[_t(text)]),
+        ...nested,
+      ],
+    };
+
+/// A document laid out to make vertical rhythm and indentation obvious:
+/// several stacked paragraphs, a blank-line spacer, a multi-paragraph
+/// blockquote, body text, and bullet + ordered lists nested two levels deep.
+final Map<String, dynamic> kSampleDoc = <String, dynamic>{
   'type': 'doc',
   'content': <Map<String, dynamic>>[
     <String, dynamic>{
@@ -65,76 +84,94 @@ const Map<String, dynamic> kSampleDoc = <String, dynamic>{
         <String, dynamic>{'type': 'text', 'text': '.'},
       ],
     },
+    _p(<Map<String, dynamic>>[
+      _t('A second paragraph sits directly below the first. The gap between '
+          'them is the theme\'s paragraphSpacing — block siblings, not a blank '
+          'line.'),
+    ]),
+    _p(<Map<String, dynamic>>[
+      _t('A third paragraph follows. Below it is a deliberately empty '
+          'paragraph, the kind the editor leaves behind when you press Enter '
+          'twice:'),
+    ]),
     <String, dynamic>{'type': 'paragraph'},
+    _p(<Map<String, dynamic>>[
+      _t('Text resumes after that blank line. Toggle "Render empty '
+          'paragraphs" below to see the spacer collapse.'),
+    ]),
     <String, dynamic>{
       'type': 'blockquote',
       'content': <Map<String, dynamic>>[
-        <String, dynamic>{
-          'type': 'paragraph',
-          'content': <Map<String, dynamic>>[
-            <String, dynamic>{
-              'type': 'text',
-              'text': 'A blockquote with a left border bar.',
-            },
-          ],
-        },
+        _p(<Map<String, dynamic>>[
+          _t('A blockquote can hold more than one paragraph behind its left '
+              'border bar.'),
+        ]),
+        _p(<Map<String, dynamic>>[
+          _t('This is its second paragraph — note the spacing carries inside '
+              'the quote too.'),
+        ]),
       ],
     },
+    _p(<Map<String, dynamic>>[
+      _t('Body text returns to the full width after the blockquote.'),
+    ]),
     <String, dynamic>{
       'type': 'bulletList',
       'content': <Map<String, dynamic>>[
-        <String, dynamic>{
-          'type': 'listItem',
-          'content': <Map<String, dynamic>>[
-            <String, dynamic>{
-              'type': 'paragraph',
-              'content': <Map<String, dynamic>>[
-                <String, dynamic>{'type': 'text', 'text': 'Bullet one'},
-              ],
-            },
-            <String, dynamic>{
-              'type': 'orderedList',
-              'attrs': <String, dynamic>{'start': 3},
-              'content': <Map<String, dynamic>>[
-                <String, dynamic>{
-                  'type': 'listItem',
-                  'content': <Map<String, dynamic>>[
-                    <String, dynamic>{
-                      'type': 'paragraph',
-                      'content': <Map<String, dynamic>>[
-                        <String, dynamic>{
-                          'type': 'text',
-                          'text': 'Nested item (starts at 3)',
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-        <String, dynamic>{
-          'type': 'listItem',
-          'content': <Map<String, dynamic>>[
-            <String, dynamic>{
-              'type': 'paragraph',
-              'content': <Map<String, dynamic>>[
-                <String, dynamic>{'type': 'text', 'text': 'Bullet two'},
-              ],
-            },
-          ],
-        },
+        _li('Bullet one', <Map<String, dynamic>>[
+          <String, dynamic>{
+            'type': 'bulletList',
+            'content': <Map<String, dynamic>>[
+              _li('Nested bullet (one level in)'),
+              _li('Another nested bullet'),
+            ],
+          },
+        ]),
+        _li('Bullet two', <Map<String, dynamic>>[
+          <String, dynamic>{
+            'type': 'orderedList',
+            'attrs': <String, dynamic>{'start': 3},
+            'content': <Map<String, dynamic>>[
+              _li('Nested ordered item (starts at 3)'),
+              _li('And the next one'),
+            ],
+          },
+        ]),
+        _li('Bullet three'),
+      ],
+    },
+    <String, dynamic>{
+      'type': 'orderedList',
+      'content': <Map<String, dynamic>>[
+        _li('First ordered item'),
+        _li('Second ordered item', <Map<String, dynamic>>[
+          <String, dynamic>{
+            'type': 'bulletList',
+            'content': <Map<String, dynamic>>[
+              _li('A bullet nested under an ordered item'),
+              _li('One more for good measure'),
+            ],
+          },
+        ]),
+        _li('Third ordered item'),
       ],
     },
   ],
 };
 
-/// The same document serialized as a raw JSON string — the exact shape
-/// Dripstone's API serves. Exercises the String input path via
-/// [TiptapViewer.fromJson]. Derived from [kSampleDoc] so the two stay in sync.
-final String kSampleJson =
-    const JsonEncoder.withIndent('  ').convert(kSampleDoc);
+/// A raw JSON string fed to the String input path via [TiptapViewer.fromJson].
+/// It does not need to mirror [kSampleDoc] — a short standalone document keeps
+/// the parsed-string preview easy to read.
+const String kSampleJson =
+    '{"type":"doc","content":['
+    '{"type":"paragraph","content":[{"type":"text","text":"Parsed straight '
+    'from a JSON "},{"type":"text","marks":[{"type":"bold"}],"text":"string"},'
+    '{"type":"text","text":" — the exact shape the API serves."}]},'
+    '{"type":"paragraph","content":[{"type":"text","text":"A second '
+    'paragraph, so the spacing shows here too."}]},'
+    '{"type":"blockquote","content":[{"type":"paragraph","content":[{"type":'
+    '"text","text":"Even a blockquote survives the round-trip."}]}]}'
+    ']}';
 
 enum ThemeChoice { light, dark, flutterFlow, custom }
 
@@ -161,6 +198,7 @@ class _ExampleAppState extends State<ExampleApp> {
   ThemeChoice _themeChoice = ThemeChoice.light;
   MentionDisplay _mentionDisplay = MentionDisplay.highlight;
   bool _useRawJson = false;
+  bool _renderEmptyParagraphs = false;
 
   bool get _isDark => _themeChoice == ThemeChoice.dark;
 
@@ -186,15 +224,16 @@ class _ExampleAppState extends State<ExampleApp> {
     ];
   }
 
-  TiptapViewerTheme? _buildTheme(BuildContext context) {
+  TiptapViewerTheme _buildTheme(BuildContext context) {
+    final TiptapViewerTheme base;
     switch (_themeChoice) {
       case ThemeChoice.light:
       case ThemeChoice.dark:
-        return null; // fromContext
+        base = TiptapViewerTheme.fromContext(context);
       case ThemeChoice.flutterFlow:
-        return tiptapThemeFromFlutterFlow(FakeFlutterFlowTheme.of(context));
+        base = tiptapThemeFromFlutterFlow(FakeFlutterFlowTheme.of(context));
       case ThemeChoice.custom:
-        return const TiptapViewerTheme(
+        base = const TiptapViewerTheme(
           baseTextStyle:
               TextStyle(fontSize: 17, height: 1.5, color: Color(0xFF0F766E)),
           mentionColor: Color(0xFFDB2777),
@@ -202,6 +241,7 @@ class _ExampleAppState extends State<ExampleApp> {
           blockquoteBorderColor: Color(0xFF0F766E),
         );
     }
+    return base.copyWith(renderEmptyParagraphs: _renderEmptyParagraphs);
   }
 
   void _showSnack(String message) {
@@ -306,6 +346,19 @@ class _ExampleAppState extends State<ExampleApp> {
                 selected: <MentionDisplay>{_mentionDisplay},
                 onSelectionChanged: (s) =>
                     setState(() => _mentionDisplay = s.first),
+              ),
+              const SizedBox(height: 24),
+              _sectionTitle('Display options'),
+              SwitchListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Render empty paragraphs'),
+                subtitle: const Text(
+                  'On: empty paragraphs show as a blank line. '
+                  'Off: they are stripped and the gap collapses.',
+                ),
+                value: _renderEmptyParagraphs,
+                onChanged: (v) => setState(() => _renderEmptyParagraphs = v),
               ),
               const SizedBox(height: 24),
               _sectionTitle('Enable / disable nodes & marks'),
