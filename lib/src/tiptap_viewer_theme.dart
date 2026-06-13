@@ -38,8 +38,13 @@ class TiptapViewerTheme {
   /// Glyph used as the bullet for unordered lists.
   final String bulletGlyph;
 
-  /// Left indent applied to a list level.
+  /// Left indent applied to a top-level list.
   final double listIndent;
+
+  /// Left indent applied to a list nested inside another list. Smaller than
+  /// [listIndent] because a nested list already sits behind its parent item's
+  /// marker and gap, so a full [listIndent] on top reads as too far in.
+  final double nestedListIndent;
 
   /// Vertical gap between list items. Also used for the gap between a list
   /// item's own content and a list nested inside it, so a nested list stays
@@ -81,6 +86,7 @@ class TiptapViewerTheme {
         const EdgeInsets.only(left: 12, top: 4, bottom: 4),
     this.bulletGlyph = '•',
     this.listIndent = 14.0,
+    this.nestedListIndent = 8.0,
     this.listItemSpacing = 4.0,
     this.listMarkerGap = 8.0,
     this.orderedNumberStyle,
@@ -116,6 +122,7 @@ class TiptapViewerTheme {
     EdgeInsetsGeometry? blockquotePadding,
     String? bulletGlyph,
     double? listIndent,
+    double? nestedListIndent,
     double? listItemSpacing,
     double? listMarkerGap,
     TextStyle? orderedNumberStyle,
@@ -135,6 +142,7 @@ class TiptapViewerTheme {
       blockquotePadding: blockquotePadding ?? this.blockquotePadding,
       bulletGlyph: bulletGlyph ?? this.bulletGlyph,
       listIndent: listIndent ?? this.listIndent,
+      nestedListIndent: nestedListIndent ?? this.nestedListIndent,
       listItemSpacing: listItemSpacing ?? this.listItemSpacing,
       listMarkerGap: listMarkerGap ?? this.listMarkerGap,
       orderedNumberStyle: orderedNumberStyle ?? this.orderedNumberStyle,

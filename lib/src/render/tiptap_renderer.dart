@@ -52,6 +52,26 @@ class TiptapRenderer {
 
   static void _noopRecognizer(GestureRecognizer _) {}
 
+  /// How many lists deep the current build is. 0 at the top level; a list
+  /// extension reads this to pick its indent, then nests its children one
+  /// deeper via [withDeeperList].
+  int _listDepth = 0;
+
+  /// The current list-nesting depth (0 == a top-level list).
+  int get listDepth => _listDepth;
+
+  /// Builds a widget with the list-nesting depth incremented, restoring it
+  /// afterward. Builds are synchronous and depth-first, so the counter is
+  /// always balanced.
+  Widget withDeeperList(Widget Function() build) {
+    _listDepth++;
+    try {
+      return build();
+    } finally {
+      _listDepth--;
+    }
+  }
+
   /// Builds the root node. Routed through [buildBlock] so the `doc` extension
   /// (or the generic unwrap fallback when it is absent) handles it.
   Widget buildDocument(TiptapNode root) {

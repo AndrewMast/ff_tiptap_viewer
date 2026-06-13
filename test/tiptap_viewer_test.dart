@@ -55,6 +55,14 @@ int _countSizedBoxesOfHeight(WidgetTester tester, double height) {
       .length;
 }
 
+/// Counts rendered [Padding] widgets whose left inset equals [left].
+int _countPaddingLeft(WidgetTester tester, double left) {
+  return tester
+      .widgetList<Padding>(find.byType(Padding))
+      .where((p) => p.padding is EdgeInsets && (p.padding as EdgeInsets).left == left)
+      .length;
+}
+
 /// Two paragraphs separated by an intentionally empty paragraph (spacer).
 const Map<String, dynamic> _emptyParagraphDoc = <String, dynamic>{
   'type': 'doc',
@@ -386,6 +394,24 @@ void main() {
       expect(_countSizedBoxesOfHeight(tester, 7.0), 1);
       // ...and paragraphSpacing never breaks the list up.
       expect(_countSizedBoxesOfHeight(tester, 30.0), 0);
+    });
+
+    testWidgets('nested list indents less than the top-level list',
+        (tester) async {
+      // Distinct, unlikely-to-collide indents pin down which one each list used.
+      await _pump(
+        tester,
+        const TiptapViewer(
+          document: _nestedListDoc,
+          selectable: false,
+          theme: TiptapViewerTheme(
+            listIndent: 23,
+            nestedListIndent: 9,
+          ),
+        ),
+      );
+      expect(_countPaddingLeft(tester, 23.0), 1); // top-level list
+      expect(_countPaddingLeft(tester, 9.0), 1); // nested list, indented less
     });
   });
 

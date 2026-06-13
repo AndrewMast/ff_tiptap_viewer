@@ -108,24 +108,30 @@ abstract class _ListBase extends TiptapBlockExtension {
     final items =
         node.content.where((c) => c.type == 'listItem').toList(growable: false);
     final start = ordered ? (node.attrs['start'] as int? ?? 1) : 0;
+    // The first list indents by listIndent; lists nested inside another list
+    // already sit behind their parent marker, so they indent by the smaller
+    // nestedListIndent. Children build one level deeper.
+    final indent = r.listDepth == 0 ? t.listIndent : t.nestedListIndent;
 
-    final rows = <Widget>[];
-    for (var i = 0; i < items.length; i++) {
-      if (i > 0) {
-        rows.add(SizedBox(height: t.listItemSpacing));
+    return r.withDeeperList(() {
+      final rows = <Widget>[];
+      for (var i = 0; i < items.length; i++) {
+        if (i > 0) {
+          rows.add(SizedBox(height: t.listItemSpacing));
+        }
+        final marker = ordered ? '${start + i}.' : t.bulletGlyph;
+        rows.add(_buildRow(r, items[i], marker));
       }
-      final marker = ordered ? '${start + i}.' : t.bulletGlyph;
-      rows.add(_buildRow(r, items[i], marker));
-    }
 
-    return Padding(
-      padding: EdgeInsets.only(left: t.listIndent),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: rows,
-      ),
-    );
+      return Padding(
+        padding: EdgeInsets.only(left: indent),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: rows,
+        ),
+      );
+    });
   }
 
   Widget _buildRow(TiptapRenderer r, TiptapNode item, String marker) {
