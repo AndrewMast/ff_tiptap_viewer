@@ -1,0 +1,23 @@
+name: ff_tiptap_viewer
+description: Renders Dripstone's TipTap (ProseMirror) JSON as native, selectable Flutter widgets with per-node theming.
+repository: https://github.com/AndrewMast/ff_tiptap_viewer
+issue_tracker: https://github.com/AndrewMast/ff_tiptap_viewer/issues
+
+version: 0.0.1
+
+environment:
+  sdk: ">=3.2.0 <4.0.0"
+  flutter: '>=3.27.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

@@ -1,0 +1,53 @@
+import 'dart:convert';
+
+import 'tiptap_node.dart';
+
+/// A parsed TipTap document, wrapping the root (`doc`) node.
+///
+/// Use [TiptapDocument.parse] to accept Dripstone's wire format — a JSON
+/// **string** — or an already-decoded `Map`. Parsing is deliberately tolerant:
+/// malformed or empty input yields `null` rather than throwing, so a viewer can
+/// render nothing instead of crashing on bad data.
+class TiptapDocument {
+  /// The root node of the document (conventionally of type `doc`).
+  final TiptapNode root;
+
+  const TiptapDocument(this.root);
+
+  /// Parses [input] into a document.
+  ///
+  /// Accepts:
+  /// * a JSON [String] (the Dripstone API format) — decoded internally,
+  /// * an already-decoded [Map],
+  ///
+  /// Returns `null` for empty, malformed, or non-object input.
+  static TiptapDocument? parse(Object? input) {
+    Map<String, dynamic>? map;
+
+    if (input is String) {
+      if (input.trim().isEmpty) {
+        return null;
+      }
+      try {
+        final decoded = jsonDecode(input);
+        if (decoded is Map) {
+          map = decoded.cast<String, dynamic>();
+        }
+      } catch (_) {
+        return null;
+      }
+    } else if (input is Map) {
+      map = input.cast<String, dynamic>();
+    }
+
+    if (map == null) {
+      return null;
+    }
+
+    try {
+      return TiptapDocument(TiptapNode.fromJson(map));
+    } catch (_) {
+      return null;
+    }
+  }
+}
