@@ -184,6 +184,13 @@ enum MentionDisplay {
 
   /// A rounded `WidgetSpan` chip — richer look, weaker copy fidelity.
   chip,
+
+  /// The bare label as ordinary body text — no mention color, weight, chip, or
+  /// tap. Use this when you don't want mentions to stand out (or aren't wired to
+  /// handle taps) but still want their text to read, rather than disappear. To
+  /// drop mentions entirely instead, leave the [Mention] extension out of the
+  /// active set so the renderer strips them.
+  plain,
 }
 
 /// Signature for a mention tap. [id] and [label] are the raw stored attributes;
@@ -216,6 +223,12 @@ class Mention extends TiptapInlineExtension {
     final label = (node.attrs['label'] ?? '').toString();
     final text = '@$label';
     final tap = onTap;
+
+    // Plain: just the label, inheriting the surrounding run's style. No mention
+    // color/weight, no chip, no tap.
+    if (display == MentionDisplay.plain) {
+      return TextSpan(text: label, style: style);
+    }
 
     if (display == MentionDisplay.chip) {
       return WidgetSpan(

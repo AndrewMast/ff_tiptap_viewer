@@ -274,6 +274,27 @@ void main() {
       expect(find.text('@My Course'), findsOneWidget); // chip's own Text
     });
 
+    testWidgets('plain renders the bare label as text (no @, no chip)',
+        (tester) async {
+      await _pump(
+        tester,
+        TiptapViewer(
+          document: _mentionOnlyDoc,
+          selectable: false,
+          extensions: <TiptapExtension>[
+            ...kDefaultTiptapExtensions,
+            const Mention(display: MentionDisplay.plain),
+          ],
+        ),
+      );
+      expect(find.textContaining('My Course'), findsOneWidget);
+      expect(find.textContaining('@'), findsNothing);
+      expect(_hasWidgetSpan(tester), isFalse);
+      // No mention styling — it inherits the surrounding body style.
+      expect(_spanStyle(tester, 'My Course')?.fontWeight,
+          isNot(const TiptapViewerTheme().mentionWeight));
+    });
+
     testWidgets('chip onTap fires with raw (id, label)', (tester) async {
       String? tappedId;
       String? tappedLabel;

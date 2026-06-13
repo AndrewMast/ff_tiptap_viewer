@@ -200,6 +200,10 @@ class _ExampleAppState extends State<ExampleApp> {
   bool _useRawJson = false;
   bool _renderEmptyParagraphs = false;
 
+  // When mentions are toggled off: render their label as plain text (true) or
+  // strip them entirely (false).
+  bool _disabledMentionAsText = true;
+
   bool get _isDark => _themeChoice == ThemeChoice.dark;
 
   List<TiptapExtension> _buildExtensions() {
@@ -220,7 +224,11 @@ class _ExampleAppState extends State<ExampleApp> {
           display: _mentionDisplay,
           onTap: (id, label) =>
               _showSnack('Tapped mention: id="$id", label="$label"'),
-        ),
+        )
+      // Mention off + "as text": still register it, but render the bare label.
+      // Off + "strip": omit it so the renderer drops mentions entirely.
+      else if (_disabledMentionAsText)
+        const Mention(display: MentionDisplay.plain),
     ];
   }
 
@@ -334,19 +342,32 @@ class _ExampleAppState extends State<ExampleApp> {
                     setState(() => _themeChoice = s.first),
               ),
               const SizedBox(height: 24),
-              _sectionTitle('Mention display'),
-              SegmentedButton<MentionDisplay>(
-                segments: const <ButtonSegment<MentionDisplay>>[
-                  ButtonSegment(
-                      value: MentionDisplay.highlight,
-                      label: Text('Highlight')),
-                  ButtonSegment(
-                      value: MentionDisplay.chip, label: Text('Chip')),
-                ],
-                selected: <MentionDisplay>{_mentionDisplay},
-                onSelectionChanged: (s) =>
-                    setState(() => _mentionDisplay = s.first),
-              ),
+              if (_enabled['mention']!) ...<Widget>[
+                _sectionTitle('Mention display'),
+                SegmentedButton<MentionDisplay>(
+                  segments: const <ButtonSegment<MentionDisplay>>[
+                    ButtonSegment(
+                        value: MentionDisplay.highlight,
+                        label: Text('Highlight')),
+                    ButtonSegment(
+                        value: MentionDisplay.chip, label: Text('Chip')),
+                  ],
+                  selected: <MentionDisplay>{_mentionDisplay},
+                  onSelectionChanged: (s) =>
+                      setState(() => _mentionDisplay = s.first),
+                ),
+              ] else ...<Widget>[
+                _sectionTitle('Disabled mention'),
+                SegmentedButton<bool>(
+                  segments: const <ButtonSegment<bool>>[
+                    ButtonSegment(value: true, label: Text('Label as text')),
+                    ButtonSegment(value: false, label: Text('Strip')),
+                  ],
+                  selected: <bool>{_disabledMentionAsText},
+                  onSelectionChanged: (s) =>
+                      setState(() => _disabledMentionAsText = s.first),
+                ),
+              ],
               const SizedBox(height: 24),
               _sectionTitle('Display options'),
               SwitchListTile(
@@ -362,13 +383,18 @@ class _ExampleAppState extends State<ExampleApp> {
               ),
               const SizedBox(height: 24),
               _sectionTitle('Enable / disable nodes & marks'),
-              ..._enabled.keys.map(
-                (key) => SwitchListTile(
-                  dense: true,
-                  title: Text(key),
-                  value: _enabled[key]!,
-                  onChanged: (v) => setState(() => _enabled[key] = v),
-                ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: _enabled.keys
+                    .map(
+                      (key) => FilterChip(
+                        label: Text(key),
+                        selected: _enabled[key]!,
+                        onSelected: (v) => setState(() => _enabled[key] = v),
+                      ),
+                    )
+                    .toList(),
               ),
             ],
           ),
