@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:ff_tiptap_viewer/ff_tiptap_viewer.dart';
 
@@ -128,6 +130,12 @@ const Map<String, dynamic> kSampleDoc = <String, dynamic>{
   ],
 };
 
+/// The same document serialized as a raw JSON string — the exact shape
+/// Dripstone's API serves. Exercises the String input path via
+/// [TiptapViewer.fromJson]. Derived from [kSampleDoc] so the two stay in sync.
+final String kSampleJson =
+    const JsonEncoder.withIndent('  ').convert(kSampleDoc);
+
 enum ThemeChoice { light, dark, flutterFlow, custom }
 
 class ExampleApp extends StatefulWidget {
@@ -152,6 +160,7 @@ class _ExampleAppState extends State<ExampleApp> {
 
   ThemeChoice _themeChoice = ThemeChoice.light;
   MentionDisplay _mentionDisplay = MentionDisplay.highlight;
+  bool _useRawJson = false;
 
   bool get _isDark => _themeChoice == ThemeChoice.dark;
 
@@ -225,12 +234,50 @@ class _ExampleAppState extends State<ExampleApp> {
                   border: Border.all(color: Theme.of(context).dividerColor),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: TiptapViewer(
-                  document: kSampleDoc,
-                  extensions: _buildExtensions(),
-                  theme: _buildTheme(context),
-                ),
+                child: _useRawJson
+                    ? TiptapViewer.fromJson(
+                        kSampleJson,
+                        extensions: _buildExtensions(),
+                        theme: _buildTheme(context),
+                      )
+                    : TiptapViewer(
+                        document: kSampleDoc,
+                        extensions: _buildExtensions(),
+                        theme: _buildTheme(context),
+                      ),
               ),
+              const SizedBox(height: 24),
+              _sectionTitle('Input source'),
+              SegmentedButton<bool>(
+                segments: const <ButtonSegment<bool>>[
+                  ButtonSegment(value: false, label: Text('Decoded Map')),
+                  ButtonSegment(value: true, label: Text('Raw JSON string')),
+                ],
+                selected: <bool>{_useRawJson},
+                onSelectionChanged: (s) => setState(() => _useRawJson = s.first),
+              ),
+              if (_useRawJson)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: const Text('View raw JSON string being parsed'),
+                    children: <Widget>[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        child: SelectableText(
+                          kSampleJson,
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               const SizedBox(height: 24),
               _sectionTitle('Theme'),
               SegmentedButton<ThemeChoice>(

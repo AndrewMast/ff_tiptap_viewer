@@ -52,31 +52,37 @@ class TiptapRenderer {
 
   static void _noopRecognizer(GestureRecognizer _) {}
 
-  /// Builds the top-level column for a `doc` (or any) root node.
+  /// Builds the root node. Routed through [buildBlock] so the `doc` extension
+  /// (or the generic unwrap fallback when it is absent) handles it.
   Widget buildDocument(TiptapNode root) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: buildBlockChildren(root.content),
-    );
+    return buildBlock(root) ?? const SizedBox.shrink();
   }
 
-  /// Builds the block children of [nodes], inserting paragraph spacing between
-  /// consecutive blocks.
+  /// Builds the block children of [nodes], inserting [TiptapViewerTheme.paragraphSpacing]
+  /// between consecutive blocks. Empty paragraphs are themselves blank-line
+  /// spacers, so no extra spacing is added on either side of them.
   List<Widget> buildBlockChildren(List<TiptapNode> nodes) {
     final widgets = <Widget>[];
+    TiptapNode? previous;
     for (final node in nodes) {
       final widget = buildBlock(node);
       if (widget == null) {
         continue;
       }
-      if (widgets.isNotEmpty) {
+      if (widgets.isNotEmpty &&
+          !_isBlankParagraph(node) &&
+          !_isBlankParagraph(previous)) {
         widgets.add(SizedBox(height: theme.paragraphSpacing));
       }
       widgets.add(widget);
+      previous = node;
     }
     return widgets;
   }
+
+  /// Whether [node] is an empty paragraph (rendered as a one-line spacer).
+  bool _isBlankParagraph(TiptapNode? node) =>
+      node != null && node.type == 'paragraph' && node.content.isEmpty;
 
   /// Builds a single block widget, or `null` when the node is stripped.
   Widget? buildBlock(TiptapNode node) {
@@ -91,7 +97,7 @@ class TiptapRenderer {
         : (_hasBlockContent(node)
             ? DisabledBehavior.unwrap
             : DisabledBehavior.strip);
-    _warnDropped(node.type, behavior);
+    _warnDropped(node.type, behavior, hasExtension: ext != null);
 
     if (behavior == DisabledBehavior.strip) {
       return null;
@@ -148,7 +154,7 @@ class TiptapRenderer {
 
     final behavior =
         ext is TiptapNodeExtension ? ext.disabledBehavior : DisabledBehavior.strip;
-    _warnDropped(node.type, behavior);
+    _warnDropped(node.type, behavior, hasExtension: ext != null);
 
     if (behavior == DisabledBehavior.strip) {
       return null;
@@ -168,7 +174,7 @@ class TiptapRenderer {
       if (ext is TiptapMarkExtension) {
         result = ext.apply(this, mark, result);
       } else {
-        _warnDropped(mark.type, DisabledBehavior.unwrap);
+        _warnDropped(mark.type, DisabledBehavior.unwrap, hasExtension: ext != null);
       }
     }
     return result;
@@ -177,14 +183,16 @@ class TiptapRenderer {
   bool _hasBlockContent(TiptapNode node) =>
       node.content.any((c) => !_inlineTypes.contains(c.type));
 
-  void _warnDropped(String type, DisabledBehavior behavior) {
+  void _warnDropped(String type, DisabledBehavior behavior,
+      {required bool hasExtension}) {
     assert(() {
       if (type.isEmpty) {
         return true;
       }
       final action = behavior == DisabledBehavior.strip ? 'stripped' : 'unwrapped';
-      developer.log('"$type" $action: no active extension',
-          name: 'ff_tiptap_viewer');
+      final reason =
+          hasExtension ? 'incompatible extension kind' : 'no active extension';
+      developer.log('"$type" $action: $reason', name: 'ff_tiptap_viewer');
       return true;
     }());
   }

@@ -29,6 +29,40 @@ TextStyle? _spanStyle(WidgetTester tester, String text) {
   return result;
 }
 
+/// Whether any rendered RichText contains a WidgetSpan (i.e. a chip mention).
+bool _hasWidgetSpan(WidgetTester tester) {
+  for (final rt in tester.widgetList<RichText>(find.byType(RichText))) {
+    var found = false;
+    rt.text.visitChildren((span) {
+      if (span is WidgetSpan) {
+        found = true;
+        return false;
+      }
+      return true;
+    });
+    if (found) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// A document containing a single mention, for isolating mention behavior.
+const Map<String, dynamic> _mentionOnlyDoc = <String, dynamic>{
+  'type': 'doc',
+  'content': <Map<String, dynamic>>[
+    <String, dynamic>{
+      'type': 'paragraph',
+      'content': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'type': 'mention',
+          'attrs': <String, dynamic>{'id': 'course@123', 'label': 'My Course'},
+        },
+      ],
+    },
+  ],
+};
+
 void main() {
   group('TiptapViewer rendering', () {
     testWidgets('renders plain text content', (tester) async {
@@ -128,6 +162,101 @@ void main() {
 
       expect(tappedId, 'course@123');
       expect(tappedLabel, 'My Course');
+    });
+  });
+
+  group('Mention display', () {
+    testWidgets('highlight renders a TextSpan (no WidgetSpan)', (tester) async {
+      await _pump(
+        tester,
+        TiptapViewer(
+          document: _mentionOnlyDoc,
+          selectable: false,
+          extensions: <TiptapExtension>[
+            ...kDefaultTiptapExtensions,
+            const Mention(),
+          ],
+        ),
+      );
+      expect(find.textContaining('@My Course'), findsOneWidget);
+      expect(_hasWidgetSpan(tester), isFalse);
+    });
+
+    testWidgets('chip renders a WidgetSpan', (tester) async {
+      await _pump(
+        tester,
+        TiptapViewer(
+          document: _mentionOnlyDoc,
+          selectable: false,
+          extensions: <TiptapExtension>[
+            ...kDefaultTiptapExtensions,
+            const Mention(display: MentionDisplay.chip),
+          ],
+        ),
+      );
+      expect(_hasWidgetSpan(tester), isTrue);
+      expect(find.text('@My Course'), findsOneWidget); // chip's own Text
+    });
+
+    testWidgets('chip onTap fires with raw (id, label)', (tester) async {
+      String? tappedId;
+      String? tappedLabel;
+      await _pump(
+        tester,
+        TiptapViewer(
+          document: _mentionOnlyDoc,
+          selectable: false,
+          extensions: <TiptapExtension>[
+            ...kDefaultTiptapExtensions,
+            Mention(
+              display: MentionDisplay.chip,
+              onTap: (id, label) {
+                tappedId = id;
+                tappedLabel = label;
+              },
+            ),
+          ],
+        ),
+      );
+
+      await tester.tap(find.text('@My Course'));
+      await tester.pump();
+
+      expect(tappedId, 'course@123');
+      expect(tappedLabel, 'My Course');
+    });
+  });
+
+  group('disabled behavior', () {
+    testWidgets('disabled mark degrades to plain text', (tester) async {
+      // All defaults except Bold — the bold word should render unweighted.
+      final withoutBold = kDefaultTiptapExtensions
+          .where((e) => e.type != 'bold')
+          .toList(growable: false);
+      await _pump(
+        tester,
+        TiptapViewer(
+          document: kKitchenSinkDoc,
+          selectable: false,
+          extensions: withoutBold,
+        ),
+      );
+      expect(find.textContaining('bold'), findsOneWidget); // still rendered
+      expect(_spanStyle(tester, 'bold')?.fontWeight, isNot(FontWeight.w700));
+    });
+  });
+
+  group('theme overrides', () {
+    testWidgets('custom boldWeight is applied', (tester) async {
+      await _pump(
+        tester,
+        const TiptapViewer(
+          document: kKitchenSinkDoc,
+          selectable: false,
+          theme: TiptapViewerTheme(boldWeight: FontWeight.w900),
+        ),
+      );
+      expect(_spanStyle(tester, 'bold')?.fontWeight, FontWeight.w900);
     });
   });
 

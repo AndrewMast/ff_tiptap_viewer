@@ -43,9 +43,10 @@ decides what an id means.
 `Mention(display: …)` chooses the render strategy:
 
 - `MentionDisplay.highlight` (default) — a styled `TextSpan`. Selects and copies
-  as real text.
-- `MentionDisplay.chip` — a rounded `WidgetSpan` pill. Richer look, but a chip
-  does **not** copy as text inside a selection. Opt in knowingly.
+  as real text; lighter, with a flat highlight.
+- `MentionDisplay.chip` — a rounded `WidgetSpan` pill. Selection and copy are
+  faithful too (the `@label` lands in the clipboard) — verified on web and iOS.
+  Re-check on Android/desktop before relying on chip copy there.
 
 ## Theming
 

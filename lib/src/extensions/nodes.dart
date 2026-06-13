@@ -216,6 +216,12 @@ class Mention extends TiptapInlineExtension {
         alignment: PlaceholderAlignment.middle,
         child: _MentionChip(
           text: text,
+          // Inherit the surrounding run's family/height/size; override color
+          // and weight from the theme — same tokens as the highlight path.
+          textStyle: style.copyWith(
+            color: t.mentionColor,
+            fontWeight: t.mentionWeight,
+          ),
           theme: t,
           onTap: tap == null ? null : () => tap(id, label),
         ),
@@ -242,10 +248,16 @@ class Mention extends TiptapInlineExtension {
 
 class _MentionChip extends StatelessWidget {
   final String text;
+  final TextStyle textStyle;
   final TiptapViewerTheme theme;
   final VoidCallback? onTap;
 
-  const _MentionChip({required this.text, required this.theme, this.onTap});
+  const _MentionChip({
+    required this.text,
+    required this.textStyle,
+    required this.theme,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -257,14 +269,7 @@ class _MentionChip extends StatelessWidget {
         color: background,
         borderRadius: BorderRadius.circular(theme.mentionChipRadius),
       ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: theme.mentionColor,
-          fontWeight: theme.mentionWeight,
-          fontSize: theme.baseTextStyle.fontSize,
-        ),
-      ),
+      child: Text(text, style: textStyle),
     );
     if (onTap == null) {
       return chip;

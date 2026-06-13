@@ -39,16 +39,16 @@ class TiptapNode {
     final rawContent = json['content'];
     final content = rawContent is List
         ? rawContent
-            .whereType<Map<String, dynamic>>()
-            .map(TiptapNode.fromJson)
+            .whereType<Map<Object?, Object?>>()
+            .map((e) => TiptapNode.fromJson(e.cast<String, dynamic>()))
             .toList(growable: false)
         : const <TiptapNode>[];
 
     final rawMarks = json['marks'];
     final marks = rawMarks is List
         ? rawMarks
-            .whereType<Map<String, dynamic>>()
-            .map(TiptapMark.fromJson)
+            .whereType<Map<Object?, Object?>>()
+            .map((e) => TiptapMark.fromJson(e.cast<String, dynamic>()))
             .toList(growable: false)
         : const <TiptapMark>[];
 
