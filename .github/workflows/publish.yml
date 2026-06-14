@@ -59,6 +59,9 @@ jobs:
         run: flutter test
 
       - name: Publish
+        # Guard against a hung interactive auth prompt (e.g. if pub.dev
+        # automated publishing isn't configured): fail fast instead of waiting.
+        timeout-minutes: 3
         run: flutter pub publish --force
 
       # Only runs if Publish above succeeded (a failed step fails the job).
