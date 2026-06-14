@@ -220,6 +220,91 @@ class TiptapRenderer {
     return result;
   }
 
+  /// Flattens [root] into a single [InlineSpan] for a compact, inline preview
+  /// (one `Text.rich`/`RichText`), instead of the block [Column] that
+  /// [buildBlock] produces.
+  ///
+  /// Inline runs concatenate; block siblings (paragraphs, list items, …) are
+  /// joined with [separator] so the whole tree collapses onto one run. Block
+  /// structure (indents, bullets, numbers, blockquote bars) is intentionally
+  /// dropped — this is the "plain" path. A `mention` renders as `@label`, in the
+  /// theme's mention color/weight when [includeStyle] is true.
+  ///
+  /// When [includeStyle] is true (default), text marks are applied via the
+  /// active mark extensions; when false, every run uses [theme.baseTextStyle]
+  /// (bold/italic/underline/strike are stripped). Returns an empty span when
+  /// nothing renders.
+  InlineSpan buildFlattenedSpan(
+    TiptapNode root, {
+    bool includeStyle = true,
+    String separator = ' ',
+  }) {
+    final base = theme.baseTextStyle;
+    return _flatten(root, base, includeStyle: includeStyle, separator: separator) ??
+        TextSpan(text: '', style: base);
+  }
+
+  /// Recursive worker for [buildFlattenedSpan]; returns `null` for a node that
+  /// contributes nothing, so empty nodes never produce a stray separator.
+  InlineSpan? _flatten(
+    TiptapNode node,
+    TextStyle base, {
+    required bool includeStyle,
+    required String separator,
+  }) {
+    if (node.isText) {
+      final value = node.text ?? '';
+      if (value.isEmpty) {
+        return null;
+      }
+      return TextSpan(
+        text: value,
+        style: includeStyle ? applyMarks(node.marks, base) : base,
+      );
+    }
+
+    if (node.type == 'mention') {
+      final label = (node.attrs['label'] ?? '').toString();
+      if (label.isEmpty) {
+        return null;
+      }
+      final style = includeStyle
+          ? base.copyWith(
+              color: theme.mentionColor,
+              fontWeight: theme.mentionWeight,
+            )
+          : base;
+      return TextSpan(text: '@$label', style: style);
+    }
+
+    final children = <InlineSpan>[];
+    for (final child in node.content) {
+      final span =
+          _flatten(child, base, includeStyle: includeStyle, separator: separator);
+      if (span != null) {
+        children.add(span);
+      }
+    }
+    if (children.isEmpty) {
+      return null;
+    }
+
+    // A block container (any non-inline child) joins its parts with the
+    // separator; a pure inline run concatenates them.
+    final hasBlockChild = node.content.any((c) => !_inlineTypes.contains(c.type));
+    if (!hasBlockChild) {
+      return TextSpan(style: base, children: children);
+    }
+    final joined = <InlineSpan>[];
+    for (var i = 0; i < children.length; i++) {
+      if (i > 0) {
+        joined.add(TextSpan(text: separator, style: base));
+      }
+      joined.add(children[i]);
+    }
+    return TextSpan(style: base, children: joined);
+  }
+
   bool _hasBlockContent(TiptapNode node) =>
       node.content.any((c) => !_inlineTypes.contains(c.type));
 

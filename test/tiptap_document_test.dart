@@ -80,4 +80,46 @@ void main() {
       });
     });
   });
+
+  group('TiptapDocument.toPlainText', () {
+    test('concatenates inline runs and joins blocks with the separator', () {
+      final doc = TiptapDocument.parse(kKitchenSinkDoc)!;
+      final text = doc.toPlainText();
+      // The first paragraph's runs concatenate directly...
+      expect(text, contains('Plain, bold, italic, stacked, '));
+      // ...and a mention flattens to its @label.
+      expect(text, contains('@My Course'));
+      // Block siblings are joined with the default space separator.
+      expect(text, contains('Quoted line. First bullet'));
+    });
+
+    test('honors a custom separator between blocks', () {
+      final doc = TiptapDocument.parse(kKitchenSinkDoc)!;
+      expect(doc.toPlainText(separator: ' / '),
+          contains('Quoted line. / First bullet'));
+    });
+
+    test('drops empty paragraphs without leaving a doubled separator', () {
+      final doc = TiptapDocument.parse(kKitchenSinkDoc)!;
+      // The kitchen-sink doc has an empty paragraph between the first paragraph
+      // and the blockquote; it must not introduce a stray double space.
+      expect(doc.toPlainText(), isNot(contains('  ')));
+    });
+
+    test('drops a mention with no label', () {
+      const doc = <String, dynamic>{
+        'type': 'doc',
+        'content': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'type': 'paragraph',
+            'content': <Map<String, dynamic>>[
+              <String, dynamic>{'type': 'text', 'text': 'Hi '},
+              <String, dynamic>{'type': 'mention', 'attrs': <String, dynamic>{}},
+            ],
+          },
+        ],
+      };
+      expect(TiptapDocument.parse(doc)!.toPlainText(), 'Hi ');
+    });
+  });
 }

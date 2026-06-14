@@ -33,6 +33,50 @@ class TiptapNode {
   /// Whether this is a literal text node.
   bool get isText => type == 'text';
 
+  /// Flattens this node (and its descendants) into a single plain string.
+  ///
+  /// Inline siblings (the runs inside a paragraph) are concatenated directly;
+  /// block siblings (paragraphs, list items, blockquote lines, …) are joined
+  /// with [separator] so the structure collapses into one readable line. Marks
+  /// carry no text and are ignored; a `mention` renders as `@label` (dropped
+  /// when it has no label). Empty/blank nodes contribute nothing — there are no
+  /// leading, trailing, or doubled separators.
+  ///
+  /// This is the string counterpart to the inline `TiptapText` widget: use it
+  /// when a caller just needs text (search, accessibility labels, previews).
+  String toPlainText({String separator = ' '}) =>
+      _plainText(separator) ?? '';
+
+  /// Recursive worker for [toPlainText]; returns `null` for a node that
+  /// contributes no text, so callers can drop it without a stray separator.
+  String? _plainText(String separator) {
+    if (isText) {
+      final value = text;
+      return (value == null || value.isEmpty) ? null : value;
+    }
+    if (type == 'mention') {
+      final label = (attrs['label'] ?? '').toString();
+      return label.isEmpty ? null : '@$label';
+    }
+
+    final parts = <String>[];
+    for (final child in content) {
+      final part = child._plainText(separator);
+      if (part != null && part.isNotEmpty) {
+        parts.add(part);
+      }
+    }
+    if (parts.isEmpty) {
+      return null;
+    }
+
+    // Block containers (anything carrying a non-inline child) join with the
+    // separator; a pure inline run (a paragraph's text/mentions) concatenates.
+    final hasBlockChild =
+        content.any((c) => c.type != 'text' && c.type != 'mention');
+    return hasBlockChild ? parts.join(separator) : parts.join();
+  }
+
   /// Builds a node (recursively) from a decoded JSON map. Tolerant of missing
   /// or malformed fields — anything unexpected is dropped rather than thrown.
   factory TiptapNode.fromJson(Map<String, dynamic> json) {

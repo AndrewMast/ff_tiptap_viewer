@@ -14,6 +14,12 @@ class TiptapDocument {
 
   const TiptapDocument(this.root);
 
+  /// Flattens the whole document into a single plain string. See
+  /// [TiptapNode.toPlainText] — block siblings are joined with [separator] and
+  /// mentions render as `@label`.
+  String toPlainText({String separator = ' '}) =>
+      root.toPlainText(separator: separator);
+
   /// Parses [input] into a document.
   ///
   /// Accepts:

@@ -14,6 +14,8 @@ theming surface.
   rest degrade gracefully (wrap → unwrap, leaf → strip).
 - Text is **selectable/copyable** out of the box (`SelectionArea`).
 - One `TiptapViewerTheme` controls all visual tokens.
+- A flattened `TiptapText` widget (plus a pure `toPlainText()`) for compact,
+  truncatable previews — see [Compact previews](#compact-previews-tiptaptext).
 
 ## Usage
 
@@ -32,6 +34,36 @@ TiptapViewer(
 
 Omit `extensions` to use the default set (everything **except** `Mention` — add
 that explicitly so mentions only render when you wire up `onTap`).
+
+## Compact previews (`TiptapText`)
+
+`TiptapViewer` builds a column of block widgets — the full document. For a
+list/card preview you usually want the opposite: the whole document **flattened
+onto one truncatable line**. `TiptapText` does that.
+
+```dart
+TiptapText(
+  document: courseDescriptionJsonString, // String or Map
+  maxLines: 2,
+  overflow: TextOverflow.ellipsis,       // line cap
+  maxChars: 120,                         // hard character cap (adds an ellipsis)
+  includeStyle: false,                   // strip bold/italic/underline/strike
+)
+```
+
+Inline runs concatenate; block siblings (paragraphs, list items, blockquote
+lines, …) are joined with `separator` (a space by default). Block *structure* —
+indents, bullets, numbers, blockquote bars — is intentionally dropped; this is
+the "plain" path. Mentions always render as `@label` (in the theme's mention
+color/weight when `includeStyle` is true), so a preview never silently drops one.
+
+`maxLines` + `overflow` give a visual line cap; `maxChars` is a hard character
+cap that cuts the text and appends `ellipsis` (default `…`, set `''` to cut with
+no marker). `TiptapText` is **not** wrapped in a `SelectionArea` by default
+(`selectable: false`) — previews are usually tap-through.
+
+When you only need a `String` (search, accessibility labels), skip the widget and
+call `TiptapDocument.toPlainText()` (or `TiptapNode.toPlainText()`) directly.
 
 ## Mentions (custom extension)
 

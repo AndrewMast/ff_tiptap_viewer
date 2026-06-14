@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `TiptapText` widget: flattens a whole document into a single truncatable inline
+  run for compact previews, instead of the block column `TiptapViewer` builds.
+  Supports `maxLines` + `overflow`, a hard `maxChars` cap (with an optional
+  `ellipsis`), `includeStyle` style stripping (keep vs. drop bold/italic/
+  underline/strike), a configurable block `separator`, and opt-in `selectable`.
+  Mentions render as `@label` so a preview never silently drops one.
+- `TiptapDocument.toPlainText()` / `TiptapNode.toPlainText()`: pure-string
+  flattening (mentions as `@label`, block siblings joined by a separator) for
+  callers that just need text (search, accessibility labels).
+- `TiptapRenderer.buildFlattenedSpan()`: the inline-flattening primitive behind
+  `TiptapText`.
+
 ## [0.0.1] - 2026-06-13
 
 Initial release: render TipTap JSON as native, selectable Flutter widgets via a

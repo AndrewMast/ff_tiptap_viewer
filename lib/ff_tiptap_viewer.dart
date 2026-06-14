@@ -9,5 +9,6 @@ export 'src/model/tiptap_document.dart';
 export 'src/model/tiptap_mark.dart';
 export 'src/model/tiptap_node.dart';
 export 'src/render/tiptap_renderer.dart';
+export 'src/tiptap_text.dart';
 export 'src/tiptap_viewer.dart';
 export 'src/tiptap_viewer_theme.dart';
