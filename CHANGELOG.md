@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-06-13
+
+Add a flattened plain/inline rendering path for compact, truncatable previews.
+
 ### Added
 
 - `TiptapText` widget: flattens a whole document into a single truncatable inline
@@ -50,5 +54,6 @@ composable extension list and a single `TiptapViewerTheme` styling surface.
   toggle, and a fake-FlutterFlow theme mapping.
 - Unit + widget tests; GitHub Actions CI (analyze + test + publish dry-run).
 
-[Unreleased]: https://github.com/AndrewMast/ff_tiptap_viewer/compare/v0.0.1...HEAD
+[Unreleased]: https://github.com/AndrewMast/ff_tiptap_viewer/compare/v0.0.2...HEAD
+[0.0.2]: https://github.com/AndrewMast/ff_tiptap_viewer/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/AndrewMast/ff_tiptap_viewer/releases/tag/v0.0.1
