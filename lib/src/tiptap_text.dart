@@ -50,6 +50,15 @@ class TiptapText extends StatelessWidget {
   /// How visual overflow past [maxLines] is handled. Defaults to
   /// [TextOverflow.clip] (Flutter's `Text` default); pass
   /// [TextOverflow.ellipsis] for a trailing "…".
+  ///
+  /// Note: with [TextOverflow.ellipsis] the trailing "…" is drawn by Flutter's
+  /// text layout, which styles it with the run it truncates inside — so when the
+  /// cut lands in marked text (and [includeStyle] is true) the "…" inherits that
+  /// run's weight/color/decoration (e.g. a strikethrough running through the
+  /// ellipsis). This is a Flutter limitation with no per-ellipsis style hook.
+  /// The [maxChars] cap does not have this issue: it appends its own [ellipsis]
+  /// in the base style. Use [maxChars] (or [includeStyle] `false`) if a clean,
+  /// unstyled ellipsis matters.
   final TextOverflow overflow;
 
   /// Hard cap on the number of characters rendered. When the flattened text is

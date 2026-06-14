@@ -62,6 +62,14 @@ cap that cuts the text and appends `ellipsis` (default `…`, set `''` to cut wi
 no marker). `TiptapText` is **not** wrapped in a `SelectionArea` by default
 (`selectable: false`) — previews are usually tap-through.
 
+> **Note:** with `overflow: TextOverflow.ellipsis`, the trailing `…` is drawn by
+> Flutter's text layout and adopts the style of the run it truncates inside — so
+> when the cut lands in marked text (and `includeStyle` is true), the `…` can
+> pick up that run's weight/color/decoration (e.g. a strikethrough running
+> through the ellipsis). This is a Flutter limitation. The `maxChars` cap is not
+> affected — it appends its own `ellipsis` in the base style — so reach for
+> `maxChars` (or `includeStyle: false`) when a clean ellipsis matters.
+
 When you only need a `String` (search, accessibility labels), skip the widget and
 call `TiptapDocument.toPlainText()` (or `TiptapNode.toPlainText()`) directly.
 
