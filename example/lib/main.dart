@@ -202,7 +202,7 @@ class _ExampleAppState extends State<ExampleApp> {
 
   // Compact-preview (TiptapText) controls.
   bool _previewIncludeStyle = false;
-  int _previewMaxLines = 2;
+  int? _previewMaxLines = 2; // null = no line limit
   bool _previewCapChars = false;
 
   // When mentions are toggled off: render their label as plain text (true) or
@@ -348,13 +348,14 @@ class _ExampleAppState extends State<ExampleApp> {
                 children: <Widget>[
                   const Text('Max lines'),
                   const SizedBox(width: 12),
-                  SegmentedButton<int>(
-                    segments: const <ButtonSegment<int>>[
+                  SegmentedButton<int?>(
+                    segments: const <ButtonSegment<int?>>[
+                      ButtonSegment(value: null, label: Text('None')),
                       ButtonSegment(value: 1, label: Text('1')),
                       ButtonSegment(value: 2, label: Text('2')),
                       ButtonSegment(value: 3, label: Text('3')),
                     ],
-                    selected: <int>{_previewMaxLines},
+                    selected: <int?>{_previewMaxLines},
                     onSelectionChanged: (s) =>
                         setState(() => _previewMaxLines = s.first),
                   ),
