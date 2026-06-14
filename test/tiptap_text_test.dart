@@ -146,6 +146,22 @@ void main() {
       expect(richText.maxLines, 2);
       expect(richText.overflow, TextOverflow.ellipsis);
     });
+
+    testWidgets('no maxLines forces clip so an ellipsis does not collapse to '
+        'one line', (tester) async {
+      // With overflow: ellipsis but no maxLines, the text engine would treat it
+      // as a single line; the widget overrides to clip so all lines render.
+      await _pump(
+        tester,
+        const TiptapText(
+          document: kKitchenSinkDoc,
+          overflow: TextOverflow.ellipsis,
+        ),
+      );
+      final richText = tester.widget<RichText>(find.byType(RichText));
+      expect(richText.maxLines, isNull);
+      expect(richText.overflow, TextOverflow.clip);
+    });
   });
 
   group('TiptapText maxChars', () {

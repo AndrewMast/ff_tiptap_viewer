@@ -51,6 +51,11 @@ class TiptapText extends StatelessWidget {
   /// [TextOverflow.clip] (Flutter's `Text` default); pass
   /// [TextOverflow.ellipsis] for a trailing "…".
   ///
+  /// Only takes effect when [maxLines] is set. With no line cap there is nothing
+  /// to overflow against, so this is forced to [TextOverflow.clip] and the full
+  /// text renders — otherwise the text engine would treat an ellipsis/fade
+  /// overflow with a null [maxLines] as a single line.
+  ///
   /// Note: with [TextOverflow.ellipsis] the trailing "…" is drawn by Flutter's
   /// text layout, which styles it with the run it truncates inside — so when the
   /// cut lands in marked text (and [includeStyle] is true) the "…" inherits that
@@ -151,10 +156,16 @@ class TiptapText extends StatelessWidget {
       span = _capChars(span, cap, resolvedTheme.baseTextStyle);
     }
 
+    // Guard a Flutter engine quirk: an ellipsis/fade overflow with no explicit
+    // maxLines is treated as maxLines == 1 (it ellipsizes the first line). With
+    // no line cap we want the full text, so fall back to clip — there is no line
+    // budget to overflow against anyway.
+    final effectiveOverflow = maxLines == null ? TextOverflow.clip : overflow;
+
     final child = Text.rich(
       span,
       maxLines: maxLines,
-      overflow: overflow,
+      overflow: effectiveOverflow,
       textAlign: textAlign,
     );
     return selectable ? SelectionArea(child: child) : child;
