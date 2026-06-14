@@ -1,8 +1,5 @@
 name: Publish
 
-# Publishes to pub.dev when a version tag is pushed. The tag must be `vX.Y.Z`
-# (the leading `v` is required), must match the version in pubspec.yaml, and
-# must have a matching `## [X.Y.Z]` entry in CHANGELOG.md.
 on:
   push:
     tags:
@@ -59,12 +56,12 @@ jobs:
         run: flutter test
 
       - name: Publish
-        # Guard against a hung interactive auth prompt (e.g. if pub.dev
-        # automated publishing isn't configured): fail fast instead of waiting.
+        # `dart pub publish`, not `flutter pub publish`: only the former does the
+        # OIDC token exchange for automated publishing; `flutter pub publish`
+        # hangs on interactive auth in CI. timeout guards against that hang.
         timeout-minutes: 3
-        run: flutter pub publish --force
+        run: dart pub publish --force
 
-      # Only runs if Publish above succeeded (a failed step fails the job).
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
