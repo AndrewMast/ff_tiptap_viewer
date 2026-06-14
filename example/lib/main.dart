@@ -200,9 +200,11 @@ class _ExampleAppState extends State<ExampleApp> {
   bool _useRawJson = false;
   bool _renderEmptyParagraphs = false;
 
-  // Compact-preview (TiptapText) controls.
+  // Compact-preview (TiptapText) controls. _previewMaxLines uses 0 to mean "no
+  // line limit" — SegmentedButton can't use null as a segment value (it doubles
+  // as the widget's no-selection sentinel), so we map 0 -> null at the call site.
   bool _previewIncludeStyle = false;
-  int? _previewMaxLines = 2; // null = no line limit
+  int _previewMaxLines = 2;
   bool _previewCapChars = false;
 
   // When mentions are toggled off: render their label as plain text (true) or
@@ -318,7 +320,7 @@ class _ExampleAppState extends State<ExampleApp> {
                   extensions: _buildExtensions(),
                   theme: _buildTheme(context),
                   includeStyle: _previewIncludeStyle,
-                  maxLines: _previewMaxLines,
+                  maxLines: _previewMaxLines == 0 ? null : _previewMaxLines,
                   overflow: TextOverflow.ellipsis,
                   maxChars: _previewCapChars ? 80 : null,
                 ),
@@ -348,14 +350,15 @@ class _ExampleAppState extends State<ExampleApp> {
                 children: <Widget>[
                   const Text('Max lines'),
                   const SizedBox(width: 12),
-                  SegmentedButton<int?>(
-                    segments: const <ButtonSegment<int?>>[
-                      ButtonSegment(value: null, label: Text('None')),
+                  SegmentedButton<int>(
+                    showSelectedIcon: false,
+                    segments: const <ButtonSegment<int>>[
+                      ButtonSegment(value: 0, label: Text('None')),
                       ButtonSegment(value: 1, label: Text('1')),
                       ButtonSegment(value: 2, label: Text('2')),
                       ButtonSegment(value: 3, label: Text('3')),
                     ],
-                    selected: <int?>{_previewMaxLines},
+                    selected: <int>{_previewMaxLines},
                     onSelectionChanged: (s) =>
                         setState(() => _previewMaxLines = s.first),
                   ),
