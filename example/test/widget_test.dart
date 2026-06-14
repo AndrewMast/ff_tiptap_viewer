@@ -13,10 +13,25 @@ void main() {
     // App chrome.
     expect(find.text('ff_tiptap_viewer'), findsOneWidget);
 
-    // Sample document content is rendered.
-    expect(find.textContaining('This viewer renders'), findsOneWidget);
+    // Sample document content is rendered at the top of the list.
+    expect(find.textContaining('This viewer renders'), findsWidgets);
 
-    // The node/mark toggles are present.
+    // The rest of the controls live below the fold — the list builds them
+    // lazily, so scroll each into view before asserting on it.
+    final listView = find.byType(Scrollable).first;
+
+    await tester.scrollUntilVisible(
+      find.text('Compact preview (TiptapText)'),
+      300,
+      scrollable: listView,
+    );
+    expect(find.text('Compact preview (TiptapText)'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('bold'),
+      300,
+      scrollable: listView,
+    );
     expect(find.text('bold'), findsOneWidget);
     expect(find.text('mention'), findsOneWidget);
   });

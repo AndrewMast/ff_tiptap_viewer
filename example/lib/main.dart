@@ -200,6 +200,11 @@ class _ExampleAppState extends State<ExampleApp> {
   bool _useRawJson = false;
   bool _renderEmptyParagraphs = false;
 
+  // Compact-preview (TiptapText) controls.
+  bool _previewIncludeStyle = false;
+  int _previewMaxLines = 2;
+  bool _previewCapChars = false;
+
   // When mentions are toggled off: render their label as plain text (true) or
   // strip them entirely (false).
   bool _disabledMentionAsText = true;
@@ -293,6 +298,67 @@ class _ExampleAppState extends State<ExampleApp> {
                         extensions: _buildExtensions(),
                         theme: _buildTheme(context),
                       ),
+              ),
+              const SizedBox(height: 24),
+              _sectionTitle('Compact preview (TiptapText)'),
+              Text(
+                'The same document flattened onto one truncatable run — the '
+                'shape a list/card preview wants.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: TiptapText(
+                  document: _useRawJson ? kSampleJson : kSampleDoc,
+                  extensions: _buildExtensions(),
+                  theme: _buildTheme(context),
+                  includeStyle: _previewIncludeStyle,
+                  maxLines: _previewMaxLines,
+                  overflow: TextOverflow.ellipsis,
+                  maxChars: _previewCapChars ? 80 : null,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SwitchListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Include style'),
+                subtitle: const Text(
+                  'On: keep bold/italic/underline/strike. Off: flat text.',
+                ),
+                value: _previewIncludeStyle,
+                onChanged: (v) => setState(() => _previewIncludeStyle = v),
+              ),
+              SwitchListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Cap at 80 characters'),
+                subtitle: const Text(
+                  'On: hard maxChars cut with a trailing ellipsis.',
+                ),
+                value: _previewCapChars,
+                onChanged: (v) => setState(() => _previewCapChars = v),
+              ),
+              Row(
+                children: <Widget>[
+                  const Text('Max lines'),
+                  const SizedBox(width: 12),
+                  SegmentedButton<int>(
+                    segments: const <ButtonSegment<int>>[
+                      ButtonSegment(value: 1, label: Text('1')),
+                      ButtonSegment(value: 2, label: Text('2')),
+                      ButtonSegment(value: 3, label: Text('3')),
+                    ],
+                    selected: <int>{_previewMaxLines},
+                    onSelectionChanged: (s) =>
+                        setState(() => _previewMaxLines = s.first),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
               _sectionTitle('Input source'),
