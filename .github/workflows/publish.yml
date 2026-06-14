@@ -1,0 +1,62 @@
+name: Publish
+
+# Publishes to pub.dev when a version tag is pushed. The tag must be `vX.Y.Z`
+# (the leading `v` is required), must match the version in pubspec.yaml, and
+# must have a matching `## [X.Y.Z]` entry in CHANGELOG.md.
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Required for pub.dev's OIDC-based authentication.
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.27.0
+
+      - name: Verify tag, pubspec, and changelog agree
+        run: |
+          # The trigger only fires on `v*` tags, so the leading `v` is present;
+          # require it explicitly as a guard, then strip it for comparison.
+          case "$GITHUB_REF_NAME" in
+            v*) version="${GITHUB_REF_NAME#v}" ;;
+            *)
+              echo "::error::Tag ($GITHUB_REF_NAME) must start with 'v'."
+              exit 1 ;;
+          esac
+
+          pubspec="$(grep -E '^version:' pubspec.yaml | sed -E 's/^version:[[:space:]]*//')"
+          echo "Tag version:     $version"
+          echo "pubspec version: $pubspec"
+          if [ "$version" != "$pubspec" ]; then
+            echo "::error::Tag ($version) does not match pubspec.yaml version ($pubspec)."
+            exit 1
+          fi
+
+          # Require a changelog heading for this version, e.g. `## [2.0.0] - ...`.
+          # The date is not validated. Dots are escaped so they match literally.
+          version_re="$(printf '%s' "$version" | sed 's/\./\\./g')"
+          if ! grep -Eq "^## \[$version_re\] - " CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## [$version] - <date>' entry."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Publish
+        run: flutter pub publish --force

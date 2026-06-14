@@ -14,9 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Extension system: block/inline/mark extensions with a disabled-behavior rule
   (`unwrap` / `strip`) and debug-only warnings for dropped types.
 - Nodes: `Doc`, `Paragraph`, `Blockquote`, `BulletList`, `OrderedList` (honors
-  `start`), `ListItem`, `TextNode`, `Mention` (`highlight` / `chip`).
+  `start`), `ListItem`, `TextNode`, `Mention` (`highlight` / `chip` / `plain`).
 - Marks: `Bold`, `Italic`, `Underline`, `Strike`.
 - `TiptapViewerTheme` single styling surface with `.fromContext` + `copyWith`.
+- `renderEmptyParagraphs` theme option (default `false`) to strip empty
+  paragraphs instead of rendering them as blank-line spacers.
+- `nestedListIndent` theme token so nested lists indent less than top-level
+  lists.
+- `MentionDisplay.plain` to render a mention as its bare label text (no color,
+  weight, chip, or tap), as an alternative to `highlight` / `chip` or stripping
+  it from the active extension set.
 - Opt-out `selectable` (`SelectionArea`) selection/copy support.
 - Example app with live node/mark toggles, theme selector, mention display
   toggle, and a fake-FlutterFlow theme mapping.
