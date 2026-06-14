@@ -107,7 +107,7 @@ abstract class _ListBase extends TiptapBlockExtension {
     final t = r.theme;
     final items =
         node.content.where((c) => c.type == 'listItem').toList(growable: false);
-    final start = ordered ? (node.attrs['start'] as int? ?? 1) : 0;
+    final start = ordered ? _coerceStart(node.attrs['start']) : 0;
     // The first list indents by listIndent; lists nested inside another list
     // already sit behind their parent marker, so they indent by the smaller
     // nestedListIndent. Children build one level deeper.
@@ -132,6 +132,17 @@ abstract class _ListBase extends TiptapBlockExtension {
         ),
       );
     });
+  }
+
+  /// Reads an ordered list's `start` attribute defensively. The wire format is
+  /// untrusted at render time (parsing is tolerant but doesn't validate attr
+  /// types), so a `start` arriving as a JSON double, a numeric string, or
+  /// anything unexpected must not throw — it falls back to 1.
+  static int _coerceStart(Object? raw) {
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    if (raw is String) return int.tryParse(raw) ?? 1;
+    return 1;
   }
 
   Widget _buildRow(TiptapRenderer r, TiptapNode item, String marker) {

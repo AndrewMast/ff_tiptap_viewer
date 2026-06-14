@@ -456,5 +456,21 @@ void main() {
           const TiptapViewer(document: '{not json', selectable: false));
       expect(find.byType(RichText), findsNothing);
     });
+
+    testWidgets('ordered list start of an unexpected type does not throw',
+        (tester) async {
+      // A JSON double and a numeric string both reach render without being
+      // validated; neither may crash. The double coerces to its int value;
+      // the string parses; anything else falls back to 1.
+      const doc = '''
+{"type":"doc","content":[
+  {"type":"orderedList","attrs":{"start":3.0},"content":[
+    {"type":"listItem","content":[
+      {"type":"paragraph","content":[{"type":"text","text":"item"}]}]}]}]}''';
+      await _pump(
+          tester, const TiptapViewer(document: doc, selectable: false));
+      expect(tester.takeException(), isNull);
+      expect(find.text('3.'), findsOneWidget);
+    });
   });
 }
