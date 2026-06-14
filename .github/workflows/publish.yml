@@ -11,9 +11,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    # Required for pub.dev's OIDC-based authentication.
     permissions:
-      id-token: write
+      id-token: write # pub.dev's OIDC-based authentication.
+      contents: write # create the GitHub Release after publishing.
     steps:
       - uses: actions/checkout@v4
 
@@ -60,3 +60,41 @@ jobs:
 
       - name: Publish
         run: flutter pub publish --force
+
+      # Only runs if Publish above succeeded (a failed step fails the job).
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+
+          # The version's entries: everything under `## [X.Y.Z] - <date>` up to
+          # the next `## ` heading or the link-reference block, header excluded.
+          # Leading/trailing blank lines are trimmed inside awk (portable).
+          notes="$(awk -v ver="$version" '
+            index($0, "## [" ver "]") == 1 { grab = 1; next }
+            grab && (/^## / || /^\[[^]]+\]: /) { exit }
+            grab { lines[n++] = $0 }
+            END {
+              s = 0;     while (s < n   && lines[s] ~ /^[[:space:]]*$/) s++
+              e = n - 1; while (e >= s  && lines[e] ~ /^[[:space:]]*$/) e--
+              for (i = s; i <= e; i++) print lines[i]
+            }
+          ' CHANGELOG.md)"
+
+          # The version's reference link from the bottom of the changelog. Strip
+          # the `[version]:` definition prefix to get the bare URL, then render
+          # it as a labeled inline link (a bare definition line wouldn't show).
+          version_re="$(printf '%s' "$version" | sed 's/\./\\./g')"
+          link="$(grep -E "^\[$version_re\]: " CHANGELOG.md || true)"
+          url="$(printf '%s' "$link" | sed -E 's/^\[[^]]*\]:[[:space:]]*//')"
+
+          body="$notes"
+          if [ -n "$url" ]; then
+            body="$(printf '%s\n\n**Changes in %s:** [%s](%s)\n' \
+              "$notes" "$GITHUB_REF_NAME" "$GITHUB_REF_NAME" "$url")"
+          fi
+
+          printf '%s' "$body" | gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file -
