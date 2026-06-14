@@ -1,7 +1,6 @@
 /// Test fixtures.
 ///
-/// [kRealDripFixture] is copied verbatim from Dripstone
-/// `tests/Datasets/StreamDrips.php` — a real-world API output string, used as a
+/// [kRealWorldFixture] is a verbatim real-world API output string, used as a
 /// "parses what the server actually sends" smoke test.
 ///
 /// [kKitchenSinkDoc] is a synthetic document that exercises every node and mark,
@@ -9,8 +8,8 @@
 /// a blockquote, and a mention — the primary coverage fixture.
 library;
 
-/// Verbatim real-world fixture (DRIP style: paragraph + bold + italic only).
-const String kRealDripFixture =
+/// Verbatim real-world fixture (paragraph + bold + italic only).
+const String kRealWorldFixture =
     '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Example "},{"type":"text","marks":[{"type":"bold"}],"text":"bold"},{"type":"text","text":" ("},{"type":"text","marks":[{"type":"italic"}],"text":"italic"},{"type":"text","text":")."}]}]}';
 
 /// Synthetic kitchen-sink document as a decoded map.

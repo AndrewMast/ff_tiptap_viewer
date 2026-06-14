@@ -1,6 +1,6 @@
 import 'tiptap_mark.dart';
 
-/// A single node in a TipTap (ProseMirror) document tree.
+/// A single node in a TipTap document tree.
 ///
 /// A node is either a block (`doc`, `paragraph`, `blockquote`, lists, …), an
 /// inline leaf (`text`, `mention`), or anything the server may add later. The

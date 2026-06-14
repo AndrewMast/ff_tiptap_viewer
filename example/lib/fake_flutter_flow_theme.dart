@@ -3,11 +3,11 @@ import 'package:ff_tiptap_viewer/ff_tiptap_viewer.dart';
 
 /// A tiny stand-in shaped like the real FlutterFlow `FlutterFlowTheme` — same
 /// getter names (`bodyMedium`, `primary`, `alternate`, …), returning plain
-/// `Color`/`TextStyle`. The real one lives in the Dripstone app and drags in
+/// `Color`/`TextStyle`. The real one lives in the FlutterFlow app and drags in
 /// `google_fonts`/`shared_preferences`, so a package can't import it — but the
 /// mapping into a [TiptapViewerTheme] is identical regardless of the source.
 ///
-/// Copy [tiptapThemeFromFlutterFlow] into the Dripstone app, swap this stand-in
+/// Copy [tiptapThemeFromFlutterFlow] into the FlutterFlow app, swap this stand-in
 /// for `FlutterFlowTheme.of(context)`, and you have a branded viewer.
 class FakeFlutterFlowTheme {
   final Color primary;

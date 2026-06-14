@@ -5,8 +5,8 @@ import 'fixtures.dart';
 
 void main() {
   group('TiptapDocument.parse', () {
-    test('parses the real Dripstone JSON string', () {
-      final doc = TiptapDocument.parse(kRealDripFixture);
+    test('parses the real-world JSON string', () {
+      final doc = TiptapDocument.parse(kRealWorldFixture);
       expect(doc, isNotNull);
       expect(doc!.root.type, 'doc');
 

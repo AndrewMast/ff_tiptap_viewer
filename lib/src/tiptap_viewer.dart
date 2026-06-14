@@ -10,9 +10,9 @@ import 'tiptap_viewer_theme.dart';
 
 /// The default extension set used when `TiptapViewer.extensions` is omitted.
 ///
-/// Contains every Dripstone node and mark **except** [Mention] — mentions only
+/// Contains every supported node and mark **except** [Mention] — mentions only
 /// render when you add `Mention(onTap: …)` yourself, so a half-wired mention is
-/// never shown and DRIP content (which never has mentions) renders fully.
+/// never shown and mention-free content renders fully.
 const List<TiptapExtension> kDefaultTiptapExtensions = <TiptapExtension>[
   Doc(),
   Paragraph(),
@@ -27,7 +27,7 @@ const List<TiptapExtension> kDefaultTiptapExtensions = <TiptapExtension>[
   Strike(),
 ];
 
-/// Renders Dripstone's TipTap (ProseMirror) JSON as native Flutter widgets.
+/// Renders TipTap JSON as native Flutter widgets.
 ///
 /// ```dart
 /// TiptapViewer(

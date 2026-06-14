@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.0.1] - 2026-06-13
 
 ### Added
 
@@ -14,8 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Extension system: block/inline/mark extensions with a disabled-behavior rule
   (`unwrap` / `strip`) and debug-only warnings for dropped types.
 - Nodes: `Doc`, `Paragraph`, `Blockquote`, `BulletList`, `OrderedList` (honors
-  `start`), `ListItem`, `TextNode`, `Mention` (`highlight` / `chip` / `plain`).
+  `start`), `ListItem`, `TextNode`.
 - Marks: `Bold`, `Italic`, `Underline`, `Strike`.
+- Custom extension `Mention` (opt-in; not in the default set) with
+  `highlight` / `chip` / `plain` display modes and an `onTap` callback.
 - `TiptapViewerTheme` single styling surface with `.fromContext` + `copyWith`.
 - `renderEmptyParagraphs` theme option (default `false`) to strip empty
   paragraphs instead of rendering them as blank-line spacers.

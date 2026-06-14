@@ -1,4 +1,4 @@
-/// Renders Dripstone's TipTap (ProseMirror) JSON as native, selectable Flutter
+/// Renders TipTap JSON as native, selectable Flutter
 /// widgets, with a composable extension list and a single theming surface.
 library;
 

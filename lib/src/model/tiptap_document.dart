@@ -4,7 +4,7 @@ import 'tiptap_node.dart';
 
 /// A parsed TipTap document, wrapping the root (`doc`) node.
 ///
-/// Use [TiptapDocument.parse] to accept Dripstone's wire format — a JSON
+/// Use [TiptapDocument.parse] to accept the wire format — a JSON
 /// **string** — or an already-decoded `Map`. Parsing is deliberately tolerant:
 /// malformed or empty input yields `null` rather than throwing, so a viewer can
 /// render nothing instead of crashing on bad data.
@@ -17,7 +17,7 @@ class TiptapDocument {
   /// Parses [input] into a document.
   ///
   /// Accepts:
-  /// * a JSON [String] (the Dripstone API format) — decoded internally,
+  /// * a JSON [String] (the TipTap API format) — decoded internally,
   /// * an already-decoded [Map],
   ///
   /// Returns `null` for empty, malformed, or non-object input.

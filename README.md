@@ -1,16 +1,15 @@
 # ff_tiptap_viewer
 
-Render [TipTap](https://tiptap.dev) (ProseMirror) JSON — the format
-[Dripstone](https://dripstone.com) serves rich text in — as native, **selectable
-and copyable** Flutter widgets. Zero runtime dependencies; composable
-extensions; a single theming surface.
+Render [TipTap](https://tiptap.dev) JSON as native, **selectable and copyable**
+Flutter widgets. Zero runtime dependencies; composable extensions; a single
+theming surface.
 
 ## Features
 
 - Accepts the API's **JSON string** _or_ an already-decoded `Map`.
 - Renders `paragraph`, `blockquote`, `bulletList`, `orderedList` (with `start`),
-  `listItem`, `text`, and `mention`; marks `bold`, `italic`, `underline`,
-  `strike`.
+  `listItem`, and `text`; marks `bold`, `italic`, `underline`, `strike`.
+- Ships a custom `Mention` extension (opt-in — see below).
 - **TipTap-style extension list** — include only the nodes/marks you want; the
   rest degrade gracefully (wrap → unwrap, leaf → strip).
 - Text is **selectable/copyable** out of the box (`SelectionArea`).
@@ -34,7 +33,10 @@ TiptapViewer(
 Omit `extensions` to use the default set (everything **except** `Mention` — add
 that explicitly so mentions only render when you wire up `onTap`).
 
-## Mentions
+## Mentions (custom extension)
+
+`Mention` is a custom extension, kept out of the default set so it only renders
+when you add it explicitly and wire up `onTap`.
 
 `Mention.onTap` receives the **raw** `(id, label)` strings exactly as stored;
 the package never parses any id convention (e.g. `course@123`) — your app
@@ -57,7 +59,7 @@ then `copyWith(...)`.
 ### FlutterFlow
 
 A package can't import the host app's `FlutterFlowTheme`, but mapping it is
-trivial since FF exposes plain `Color`/`TextStyle`. In the Dripstone app:
+trivial since FF exposes plain `Color`/`TextStyle`. In the FlutterFlow app:
 
 ```dart
 TiptapViewerTheme tiptapThemeFromFlutterFlow(FlutterFlowTheme ff) {

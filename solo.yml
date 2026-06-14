@@ -1,4 +1,24 @@
-# Visit https://soloterm.com to learn more
 name: ff_tiptap_viewer
 icon: null
-processes: {}
+processes:
+  Run Example:
+    command: cd example && flutter run -d "iPhone 17"
+    working_dir: null
+    auto_start: false
+    auto_restart: false
+    restart_when_changed: []
+    env: {}
+  Flutter Test:
+    command: flutter analyze && flutter test
+    working_dir: null
+    auto_start: false
+    auto_restart: false
+    restart_when_changed: []
+    env: {}
+  Dry Publish:
+    command: flutter pub publish --dry-run
+    working_dir: null
+    auto_start: false
+    auto_restart: false
+    restart_when_changed: []
+    env: {}
