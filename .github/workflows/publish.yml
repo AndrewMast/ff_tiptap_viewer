@@ -9,8 +9,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # pub.dev's OIDC-based authentication.
-      contents: write # create the GitHub Release after publishing.
+      id-token: write
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -55,12 +55,16 @@ jobs:
       - name: Test
         run: flutter test
 
+      # Provisions the pub.dev OIDC credentials (needs `id-token: write`). The
+      # publish command itself doesn't mint the token — without this step it
+      # falls back to interactive auth and hangs.
+      - uses: dart-lang/setup-dart@v1
+
       - name: Publish
-        # `dart pub publish`, not `flutter pub publish`: only the former does the
-        # OIDC token exchange for automated publishing; `flutter pub publish`
-        # hangs on interactive auth in CI. timeout guards against that hang.
+        # `flutter pub publish` (not `dart`) so the `sdk: flutter` deps resolve;
+        # auth comes from the setup-dart step above. timeout guards a hang.
         timeout-minutes: 3
-        run: dart pub publish --force
+        run: flutter pub publish --force
 
       - name: Create GitHub Release
         env:
