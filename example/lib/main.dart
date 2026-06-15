@@ -25,12 +25,53 @@ Map<String, dynamic> _li(String text,
       ],
     };
 
+/// Builds a heading node at [level] from a single line of text.
+Map<String, dynamic> _h(int level, String text) => <String, dynamic>{
+      'type': 'heading',
+      'attrs': <String, dynamic>{'level': level},
+      'content': <Map<String, dynamic>>[_t(text)],
+    };
+
+/// Builds an inline text node carrying the `code` mark.
+Map<String, dynamic> _code(String text) => <String, dynamic>{
+      'type': 'text',
+      'marks': <Map<String, dynamic>>[
+        <String, dynamic>{'type': 'code'},
+      ],
+      'text': text,
+    };
+
+/// Builds an inline text node carrying a `link` mark with [href].
+Map<String, dynamic> _link(String text, String href) => <String, dynamic>{
+      'type': 'text',
+      'marks': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'type': 'link',
+          'attrs': <String, dynamic>{'href': href},
+        },
+      ],
+      'text': text,
+    };
+
+/// A code block holding [code] verbatim (newlines preserved).
+Map<String, dynamic> _codeBlock(String code) => <String, dynamic>{
+      'type': 'codeBlock',
+      'content': <Map<String, dynamic>>[_t(code)],
+    };
+
+/// A horizontal rule node.
+const Map<String, dynamic> _hr = <String, dynamic>{'type': 'horizontalRule'};
+
+/// A hard line break (inline).
+const Map<String, dynamic> _br = <String, dynamic>{'type': 'hardBreak'};
+
 /// A document laid out to make vertical rhythm and indentation obvious:
 /// several stacked paragraphs, a blank-line spacer, a multi-paragraph
 /// blockquote, body text, and bullet + ordered lists nested two levels deep.
 final Map<String, dynamic> kSampleDoc = <String, dynamic>{
   'type': 'doc',
   'content': <Map<String, dynamic>>[
+    _h(1, 'Feature showcase'),
     <String, dynamic>{
       'type': 'paragraph',
       'content': <Map<String, dynamic>>[
@@ -85,6 +126,23 @@ final Map<String, dynamic> kSampleDoc = <String, dynamic>{
       ],
     },
     _p(<Map<String, dynamic>>[
+      _t('It also does inline '),
+      _code('code()'),
+      _t(' and a '),
+      _link('hyperlink', 'https://tiptap.dev'),
+      _t(' (tap it when the Link toggle is on).'),
+    ]),
+    // Hard breaks keep several lines inside ONE paragraph. Toggle "hardBreak"
+    // off and these collapse onto a single run-together line, which makes the
+    // effect obvious regardless of where the text would naturally wrap.
+    _p(<Map<String, dynamic>>[
+      _t('Hard breaks (e.g. an address):'),
+      _br,
+      _t('1600 Amphitheatre Pkwy'),
+      _br,
+      _t('Mountain View, CA 94043'),
+    ]),
+    _p(<Map<String, dynamic>>[
       _t('A second paragraph sits directly below the first. The gap between '
           'them is the theme\'s paragraphSpacing — block siblings, not a blank '
           'line.'),
@@ -115,6 +173,10 @@ final Map<String, dynamic> kSampleDoc = <String, dynamic>{
     _p(<Map<String, dynamic>>[
       _t('Body text returns to the full width after the blockquote.'),
     ]),
+    _h(2, 'Code block'),
+    _codeBlock("void main() {\n  print('hello, tiptap');\n}"),
+    _hr,
+    _h(2, 'Lists'),
     <String, dynamic>{
       'type': 'bulletList',
       'content': <Map<String, dynamic>>[
@@ -183,13 +245,20 @@ class ExampleApp extends StatefulWidget {
 }
 
 class _ExampleAppState extends State<ExampleApp> {
-  // Toggle state for each node/mark type.
+  // Toggle state for each configurable StarterKit member (+ mention). Always-on
+  // structural types (doc, paragraph, text, listItem) are omitted.
   final Map<String, bool> _enabled = <String, bool>{
     'bold': true,
     'italic': true,
     'underline': true,
     'strike': true,
+    'code': true,
+    'link': true,
+    'heading': true,
     'blockquote': true,
+    'codeBlock': true,
+    'horizontalRule': true,
+    'hardBreak': true,
     'bulletList': true,
     'orderedList': true,
     'mention': true,
@@ -215,17 +284,26 @@ class _ExampleAppState extends State<ExampleApp> {
 
   List<TiptapExtension> _buildExtensions() {
     return <TiptapExtension>[
-      const Doc(),
-      const Paragraph(),
-      const TextNode(),
-      const ListItem(),
-      if (_enabled['bold']!) const Bold(),
-      if (_enabled['italic']!) const Italic(),
-      if (_enabled['underline']!) const Underline(),
-      if (_enabled['strike']!) const Strike(),
-      if (_enabled['blockquote']!) const Blockquote(),
-      if (_enabled['bulletList']!) const BulletList(),
-      if (_enabled['orderedList']!) const OrderedList(),
+      // Start from StarterKit, toggling members via its per-member flags.
+      StarterKit(
+        bold: _enabled['bold']!,
+        italic: _enabled['italic']!,
+        underline: _enabled['underline']!,
+        strike: _enabled['strike']!,
+        code: _enabled['code']!,
+        link: _enabled['link']!,
+        heading: _enabled['heading']!,
+        blockquote: _enabled['blockquote']!,
+        codeBlock: _enabled['codeBlock']!,
+        horizontalRule: _enabled['horizontalRule']!,
+        hardBreak: _enabled['hardBreak']!,
+        bulletList: _enabled['bulletList']!,
+        orderedList: _enabled['orderedList']!,
+      ),
+      // StarterKit's link is non-interactive; list a wired Link AFTER the kit so
+      // last-wins makes links tappable (only while the toggle is on).
+      if (_enabled['link']!)
+        Link(onTap: (href) => _showSnack('Tapped link: $href')),
       if (_enabled['mention']!)
         Mention(
           display: _mentionDisplay,
