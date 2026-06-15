@@ -1,6 +1,5 @@
 import 'package:ff_tiptap_viewer/ff_tiptap_viewer.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Future<void> _pump(WidgetTester tester, Widget child) {
