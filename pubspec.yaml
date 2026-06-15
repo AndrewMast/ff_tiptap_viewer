@@ -3,7 +3,7 @@ description: Renders TipTap JSON as native, selectable Flutter widgets with per-
 repository: https://github.com/AndrewMast/ff_tiptap_viewer
 issue_tracker: https://github.com/AndrewMast/ff_tiptap_viewer/issues
 
-version: 0.0.2
+version: 0.0.3
 
 environment:
   sdk: ">=3.2.0 <4.0.0"

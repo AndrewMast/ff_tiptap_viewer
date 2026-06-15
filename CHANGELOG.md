@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-06-15
+
 Adopt a TipTap-style `StarterKit`, make extension **sets** a first-class concept,
 add the remaining viewer-relevant StarterKit nodes/marks, and fully decouple
 `Mention` from the core. This is a **breaking** change set.
@@ -104,6 +106,7 @@ composable extension list and a single `TiptapViewerTheme` styling surface.
   toggle, and a fake-FlutterFlow theme mapping.
 - Unit + widget tests; GitHub Actions CI (analyze + test + publish dry-run).
 
-[Unreleased]: https://github.com/AndrewMast/ff_tiptap_viewer/compare/v0.0.2...HEAD
+[Unreleased]: https://github.com/AndrewMast/ff_tiptap_viewer/compare/v0.0.3...HEAD
+[0.0.3]: https://github.com/AndrewMast/ff_tiptap_viewer/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/AndrewMast/ff_tiptap_viewer/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/AndrewMast/ff_tiptap_viewer/releases/tag/v0.0.1
