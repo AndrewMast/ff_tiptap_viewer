@@ -4,48 +4,34 @@ import '../model/tiptap_node.dart';
 import '../render/tiptap_renderer.dart';
 import 'tiptap_extension.dart';
 
-/// How a [HardBreak] collapses in the **flattened / plain-text** path
-/// (`TiptapText`, `toPlainText`).
+/// How a [HardBreak] renders.
 ///
-/// This does **not** affect the full [TiptapViewer], which always renders a hard
-/// break as a real line break (`\n`) — it only controls the single-run output.
-enum HardBreakFlatten {
-  /// Keep the line break (`\n`) — the flattened text still breaks at this point.
+/// To drop hard breaks entirely, leave [HardBreak] out of the active set
+/// (e.g. `StarterKit(hardBreak: false)`) so the renderer strips them.
+enum HardBreakMode {
+  /// Render as a line break (`\n`). The default.
   newline,
 
-  /// Replace the break with a single space — keeps everything on one line.
+  /// Render as a single space — keeps the surrounding text on one line.
   space,
-
-  /// Contribute nothing — adjacent runs join directly ("complete flatten").
-  remove,
 }
 
-/// `hardBreak` → a line break (`\n`) inside the current inline run.
-///
-/// In flattened previews / `toPlainText`, its representation is governed by
-/// [flatten] (default [HardBreakFlatten.newline]).
+/// `hardBreak` → a line break (or a space, per [mode]) inside the inline run.
 class HardBreak extends TiptapInlineExtension {
-  /// How the break collapses in the flattened / plain-text path.
-  final HardBreakFlatten flatten;
+  /// How the break renders.
+  final HardBreakMode mode;
 
-  const HardBreak({this.flatten = HardBreakFlatten.newline});
+  const HardBreak({this.mode = HardBreakMode.newline});
 
   @override
   String get type => 'hardBreak';
 
-  @override
-  InlineSpan buildInline(TiptapRenderer r, TiptapNode node, TextStyle style) =>
-      TextSpan(text: '\n', style: style);
+  String get _char => mode == HardBreakMode.space ? ' ' : '\n';
 
   @override
-  String? toPlainText(TiptapNode node) {
-    switch (flatten) {
-      case HardBreakFlatten.newline:
-        return '\n';
-      case HardBreakFlatten.space:
-        return ' ';
-      case HardBreakFlatten.remove:
-        return null;
-    }
-  }
+  InlineSpan buildInline(TiptapRenderer r, TiptapNode node, TextStyle style) =>
+      TextSpan(text: _char, style: style);
+
+  @override
+  String? toPlainText(TiptapNode node) => _char;
 }

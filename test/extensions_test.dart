@@ -181,17 +181,36 @@ void main() {
   });
 
   group('HardBreak', () {
-    testWidgets('renders a newline inside the run', (tester) async {
-      final doc = _docOf([
-        _para([
-          _text('a'),
-          <String, dynamic>{'type': 'hardBreak'},
-          _text('b'),
-        ]),
-      ]);
+    final doc = _docOf([
+      _para([
+        _text('a'),
+        <String, dynamic>{'type': 'hardBreak'},
+        _text('b'),
+      ]),
+    ]);
+
+    testWidgets('renders a newline inside the run by default', (tester) async {
       await _pump(tester,
           TiptapViewer(document: doc, selectable: false, theme: _knownBase));
       expect(_span(tester, '\n'), isNotNull);
+    });
+
+    testWidgets('renders as a space in the viewer when mode is space',
+        (tester) async {
+      await _pump(
+        tester,
+        TiptapViewer(
+          document: doc,
+          selectable: false,
+          theme: _knownBase,
+          extensions: const <TiptapExtension>[
+            StarterKit(),
+            HardBreak(mode: HardBreakMode.space),
+          ],
+        ),
+      );
+      expect(_span(tester, ' '), isNotNull);
+      expect(_span(tester, '\n'), isNull);
     });
   });
 
@@ -338,7 +357,7 @@ void main() {
     });
   });
 
-  group('HardBreak flatten mode', () {
+  group('HardBreak mode (flattened path)', () {
     final doc = TiptapDocument.parse(_docOf([
       _para([
         _text('a'),
@@ -347,23 +366,19 @@ void main() {
       ]),
     ]))!;
 
-    String flat(HardBreakFlatten mode) => doc.toPlainText(
+    String flat(HardBreakMode mode) => doc.toPlainText(
           inlineLeaf: inlineLeafText(<TiptapExtension>[
             const StarterKit(),
-            HardBreak(flatten: mode), // last-wins over the kit's HardBreak
+            HardBreak(mode: mode), // last-wins over the kit's HardBreak
           ]),
         );
 
     test('newline keeps the break', () {
-      expect(flat(HardBreakFlatten.newline), 'a\nb');
+      expect(flat(HardBreakMode.newline), 'a\nb');
     });
 
     test('space collapses onto one line', () {
-      expect(flat(HardBreakFlatten.space), 'a b');
-    });
-
-    test('remove joins adjacent runs', () {
-      expect(flat(HardBreakFlatten.remove), 'ab');
+      expect(flat(HardBreakMode.space), 'a b');
     });
   });
 }
