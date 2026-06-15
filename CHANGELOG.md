@@ -22,7 +22,8 @@ add the remaining viewer-relevant StarterKit nodes/marks, and fully decouple
   set may contain other sets.
 - New nodes: `Heading` (per-level styles via `TiptapViewerTheme.headingStyle`),
   `CodeBlock` (monospace, whitespace-preserving, tinted), `HorizontalRule`,
-  `HardBreak`.
+  `HardBreak` (with `HardBreak(flatten: …)` choosing how it collapses in the
+  flattened/plain-text path: `newline` (default), `space`, or `remove`).
 - New marks: `Code` (inline monospace) and `Link` (in StarterKit, styled but
   non-interactive by default; add `Link(onTap: …)` after the kit to make links
   tappable).

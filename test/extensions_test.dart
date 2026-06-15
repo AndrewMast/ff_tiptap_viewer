@@ -304,6 +304,68 @@ void main() {
       expect(find.textContaining('@Bob'), findsOneWidget);
     });
   });
+
+  group('renderer.toPlainText', () {
+    final doc = TiptapDocument.parse(_docOf([
+      _para([
+        _text('Hi '),
+        <String, dynamic>{
+          'type': 'mention',
+          'attrs': <String, dynamic>{'id': 'x', 'label': 'Bob'},
+        },
+      ]),
+    ]))!;
+
+    testWidgets('flattens to a string via inline-extension hooks',
+        (tester) async {
+      late String withMention;
+      late String withoutMention;
+      await tester.pumpWidget(MaterialApp(
+        home: Builder(builder: (context) {
+          String run(List<TiptapExtension> exts) => TiptapRenderer(
+                context: context,
+                theme: const TiptapViewerTheme(),
+                registry: TiptapRegistry(exts),
+              ).toPlainText(doc.root);
+          withMention = run(const <TiptapExtension>[StarterKit(), Mention()]);
+          withoutMention = run(const <TiptapExtension>[StarterKit()]);
+          return const SizedBox();
+        }),
+      ));
+      // Mention enabled -> its @label is included; otherwise dropped.
+      expect(withMention, 'Hi @Bob');
+      expect(withoutMention, 'Hi ');
+    });
+  });
+
+  group('HardBreak flatten mode', () {
+    final doc = TiptapDocument.parse(_docOf([
+      _para([
+        _text('a'),
+        const <String, dynamic>{'type': 'hardBreak'},
+        _text('b'),
+      ]),
+    ]))!;
+
+    String flat(HardBreakFlatten mode) => doc.toPlainText(
+          inlineLeaf: inlineLeafText(<TiptapExtension>[
+            const StarterKit(),
+            HardBreak(flatten: mode), // last-wins over the kit's HardBreak
+          ]),
+        );
+
+    test('newline keeps the break', () {
+      expect(flat(HardBreakFlatten.newline), 'a\nb');
+    });
+
+    test('space collapses onto one line', () {
+      expect(flat(HardBreakFlatten.space), 'a b');
+    });
+
+    test('remove joins adjacent runs', () {
+      expect(flat(HardBreakFlatten.remove), 'ab');
+    });
+  });
 }
 
 /// A custom block extension replacing `paragraph` to prove last-wins override.
