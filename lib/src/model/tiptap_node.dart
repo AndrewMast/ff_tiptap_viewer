@@ -38,30 +38,46 @@ class TiptapNode {
   /// Inline siblings (the runs inside a paragraph) are concatenated directly;
   /// block siblings (paragraphs, list items, blockquote lines, …) are joined
   /// with [separator] so the structure collapses into one readable line. Marks
-  /// carry no text and are ignored; a `mention` renders as `@label` (dropped
-  /// when it has no label). Empty/blank nodes contribute nothing — there are no
-  /// leading, trailing, or doubled separators.
+  /// carry no text and are ignored. Empty/blank nodes contribute nothing —
+  /// there are no leading, trailing, or doubled separators.
+  ///
+  /// This is a pure-model extractor: it knows only `text`. Non-text inline
+  /// leaves (e.g. `mention`) contribute nothing **unless** [inlineLeaf] is
+  /// supplied — a hook returning the leaf's text (`'@label'` for a mention),
+  /// or `null` for a node it doesn't handle. The renderer/`TiptapText` build
+  /// this hook from the active extensions; standalone callers can pass one via
+  /// `inlineLeafText(extensions)`. A non-null hook result also marks the node as
+  /// **inline** for block/inline join classification.
   ///
   /// This is the string counterpart to the inline `TiptapText` widget: use it
   /// when a caller just needs text (search, accessibility labels, previews).
-  String toPlainText({String separator = ' '}) =>
-      _plainText(separator) ?? '';
+  String toPlainText({
+    String separator = ' ',
+    String? Function(TiptapNode node)? inlineLeaf,
+  }) =>
+      _plainText(separator, inlineLeaf) ?? '';
 
   /// Recursive worker for [toPlainText]; returns `null` for a node that
   /// contributes no text, so callers can drop it without a stray separator.
-  String? _plainText(String separator) {
+  String? _plainText(
+    String separator,
+    String? Function(TiptapNode node)? inlineLeaf,
+  ) {
     if (isText) {
       final value = text;
       return (value == null || value.isEmpty) ? null : value;
     }
-    if (type == 'mention') {
-      final label = (attrs['label'] ?? '').toString();
-      return label.isEmpty ? null : '@$label';
+
+    // A content-less leaf (e.g. mention, hardBreak) contributes its text via
+    // the hook, when supplied. Without a hook, it contributes nothing.
+    if (content.isEmpty) {
+      final leaf = inlineLeaf?.call(this);
+      return (leaf == null || leaf.isEmpty) ? null : leaf;
     }
 
     final parts = <String>[];
     for (final child in content) {
-      final part = child._plainText(separator);
+      final part = child._plainText(separator, inlineLeaf);
       if (part != null && part.isNotEmpty) {
         parts.add(part);
       }
@@ -70,10 +86,11 @@ class TiptapNode {
       return null;
     }
 
-    // Block containers (anything carrying a non-inline child) join with the
-    // separator; a pure inline run (a paragraph's text/mentions) concatenates.
-    final hasBlockChild =
-        content.any((c) => c.type != 'text' && c.type != 'mention');
+    // Block containers (carrying a child that has its own block content) join
+    // with the separator; a pure inline run (text + content-less inline leaves
+    // like mentions) concatenates — independent of whether a hook was supplied,
+    // so unregistered mentions never reshape the surrounding text.
+    final hasBlockChild = content.any((c) => !c.isText && c.content.isNotEmpty);
     return hasBlockChild ? parts.join(separator) : parts.join();
   }
 

@@ -9,16 +9,47 @@ import '../model/tiptap_node.dart';
 import '../tiptap_viewer_theme.dart';
 
 /// Looks up the active extension for a given TipTap type.
+///
+/// Construction flattens the entries: a [TiptapExtensionSet] expands (recursively)
+/// into its members, and each [TiptapTypedExtension] registers under its
+/// [TiptapTypedExtension.type]. Flattening is left-to-right and **last-wins** —
+/// an entry listed later overrides an earlier one of the same type, so you can
+/// drop a replacement after a set. Shadowing is logged in debug builds.
 class TiptapRegistry {
-  final Map<String, TiptapExtension> _byType;
+  final Map<String, TiptapTypedExtension> _byType;
 
   TiptapRegistry(List<TiptapExtension> extensions)
-      : _byType = <String, TiptapExtension>{
-          for (final e in extensions) e.type: e,
-        };
+      : _byType = _flatten(extensions);
+
+  static Map<String, TiptapTypedExtension> _flatten(
+      List<TiptapExtension> extensions) {
+    final map = <String, TiptapTypedExtension>{};
+    void visit(List<TiptapExtension> list) {
+      for (final e in list) {
+        switch (e) {
+          case TiptapExtensionSet():
+            visit(e.extensions);
+          case TiptapTypedExtension():
+            assert(() {
+              if (map.containsKey(e.type)) {
+                developer.log(
+                  '"${e.type}" overridden by a later extension',
+                  name: 'ff_tiptap_viewer',
+                );
+              }
+              return true;
+            }());
+            map[e.type] = e;
+        }
+      }
+    }
+
+    visit(extensions);
+    return map;
+  }
 
   /// The extension handling [type], or `null` when none is active.
-  TiptapExtension? operator [](String type) => _byType[type];
+  TiptapTypedExtension? operator [](String type) => _byType[type];
 }
 
 /// Walks a [TiptapNode] tree and produces Flutter widgets/spans.
@@ -40,9 +71,6 @@ class TiptapRenderer {
   /// can dispose them. Defaults to a no-op (e.g. when used in isolation).
   final void Function(GestureRecognizer recognizer) registerRecognizer;
 
-  /// Inline types that never count as "block content" for unwrap fallback.
-  static const Set<String> _inlineTypes = <String>{'text', 'mention'};
-
   TiptapRenderer({
     required this.context,
     required this.theme,
@@ -51,6 +79,16 @@ class TiptapRenderer {
   }) : registerRecognizer = registerRecognizer ?? _noopRecognizer;
 
   static void _noopRecognizer(GestureRecognizer _) {}
+
+  /// Whether [node] renders inline — intrinsic `text`, any type handled by a
+  /// [TiptapInlineExtension] (e.g. `mention`, `hardBreak`), or a content-less
+  /// leaf (so an *unregistered* inline node like a mention without its
+  /// extension still doesn't flip its paragraph to block-join). Everything else
+  /// is treated as block content for the unwrap/flatten classification.
+  bool _isInlineNode(TiptapNode node) =>
+      node.isText ||
+      node.content.isEmpty ||
+      registry[node.type] is TiptapInlineExtension;
 
   /// How many lists deep the current build is. 0 at the top level; a list
   /// extension reads this to pick its indent, then nests its children one
@@ -189,7 +227,7 @@ class TiptapRenderer {
 
     // Intrinsic fallback: text always renders, even without a TextNode ext.
     if (node.isText) {
-      return TextSpan(text: node.text ?? '', style: applyMarks(node.marks, style));
+      return buildTextSpan(node, style);
     }
 
     final behavior =
@@ -203,6 +241,27 @@ class TiptapRenderer {
       return TextSpan(children: buildInlineSpans(node.content, style));
     }
     return null;
+  }
+
+  /// Builds the [TextSpan] for a `text` [node]: folds its marks into [style] and
+  /// attaches the first tap recognizer any mark contributes (e.g. `link`),
+  /// registering it for disposal. Used by the `text` extension and the
+  /// intrinsic-text fallback.
+  TextSpan buildTextSpan(TiptapNode node, TextStyle style) {
+    final resolved = applyMarks(node.marks, style);
+    GestureRecognizer? recognizer;
+    for (final mark in node.marks) {
+      final ext = registry[mark.type];
+      if (ext is TiptapMarkExtension) {
+        final rec = ext.buildRecognizer(this, mark);
+        if (rec != null) {
+          recognizer = rec;
+          registerRecognizer(rec);
+          break; // a TextSpan has a single recognizer slot — first-wins.
+        }
+      }
+    }
+    return TextSpan(text: node.text ?? '', style: resolved, recognizer: recognizer);
   }
 
   /// Applies [marks] (in order) to [style] using the active mark extensions.
@@ -220,6 +279,17 @@ class TiptapRenderer {
     return result;
   }
 
+  /// Flattens [root] into a single plain string, honoring inline extensions
+  /// (e.g. `Mention` → `@label`) via their [TiptapInlineExtension.toPlainText].
+  /// Types with no active inline extension contribute no text.
+  String toPlainText(TiptapNode root, {String separator = ' '}) =>
+      root.toPlainText(separator: separator, inlineLeaf: _plainLeaf);
+
+  String? _plainLeaf(TiptapNode node) {
+    final ext = registry[node.type];
+    return ext is TiptapInlineExtension ? ext.toPlainText(node) : null;
+  }
+
   /// Flattens [root] into a single [InlineSpan] for a compact, inline preview
   /// (one `Text.rich`/`RichText`), instead of the block [Column] that
   /// [buildBlock] produces.
@@ -227,13 +297,13 @@ class TiptapRenderer {
   /// Inline runs concatenate; block siblings (paragraphs, list items, …) are
   /// joined with [separator] so the whole tree collapses onto one run. Block
   /// structure (indents, bullets, numbers, blockquote bars) is intentionally
-  /// dropped — this is the "plain" path. A `mention` renders as `@label`, in the
-  /// theme's mention color/weight when [includeStyle] is true.
+  /// dropped — this is the "plain" path. An inline extension renders via its
+  /// [TiptapInlineExtension.buildFlattened] (e.g. a `mention` as `@label` in the
+  /// theme's mention color when [includeStyle] is true).
   ///
   /// When [includeStyle] is true (default), text marks are applied via the
-  /// active mark extensions; when false, every run uses [theme.baseTextStyle]
-  /// (bold/italic/underline/strike are stripped). Returns an empty span when
-  /// nothing renders.
+  /// active mark extensions; when false, every run uses [theme.baseTextStyle].
+  /// Returns an empty span when nothing renders.
   InlineSpan buildFlattenedSpan(
     TiptapNode root, {
     bool includeStyle = true,
@@ -263,18 +333,10 @@ class TiptapRenderer {
       );
     }
 
-    if (node.type == 'mention') {
-      final label = (node.attrs['label'] ?? '').toString();
-      if (label.isEmpty) {
-        return null;
-      }
-      final style = includeStyle
-          ? base.copyWith(
-              color: theme.mentionColor,
-              fontWeight: theme.mentionWeight,
-            )
-          : base;
-      return TextSpan(text: '@$label', style: style);
+    // An inline extension provides its own flattened representation.
+    final ext = registry[node.type];
+    if (ext is TiptapInlineExtension) {
+      return ext.buildFlattened(this, node, base, includeStyle: includeStyle);
     }
 
     final children = <InlineSpan>[];
@@ -291,7 +353,7 @@ class TiptapRenderer {
 
     // A block container (any non-inline child) joins its parts with the
     // separator; a pure inline run concatenates them.
-    final hasBlockChild = node.content.any((c) => !_inlineTypes.contains(c.type));
+    final hasBlockChild = node.content.any((c) => !_isInlineNode(c));
     if (!hasBlockChild) {
       return TextSpan(style: base, children: children);
     }
@@ -306,7 +368,7 @@ class TiptapRenderer {
   }
 
   bool _hasBlockContent(TiptapNode node) =>
-      node.content.any((c) => !_inlineTypes.contains(c.type));
+      node.content.any((c) => !_isInlineNode(c));
 
   void _warnDropped(String type, DisabledBehavior behavior,
       {required bool hasExtension}) {

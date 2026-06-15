@@ -15,10 +15,16 @@ class TiptapDocument {
   const TiptapDocument(this.root);
 
   /// Flattens the whole document into a single plain string. See
-  /// [TiptapNode.toPlainText] — block siblings are joined with [separator] and
-  /// mentions render as `@label`.
-  String toPlainText({String separator = ' '}) =>
-      root.toPlainText(separator: separator);
+  /// [TiptapNode.toPlainText] — block siblings are joined with [separator].
+  ///
+  /// Non-text inline leaves (e.g. `mention`) contribute text only when
+  /// [inlineLeaf] is supplied; build one from your extensions with
+  /// `inlineLeafText(extensions)`.
+  String toPlainText({
+    String separator = ' ',
+    String? Function(TiptapNode node)? inlineLeaf,
+  }) =>
+      root.toPlainText(separator: separator, inlineLeaf: inlineLeaf);
 
   /// Parses [input] into a document.
   ///

@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Adopt a TipTap-style `StarterKit`, make extension **sets** a first-class concept,
+add the remaining viewer-relevant StarterKit nodes/marks, and fully decouple
+`Mention` from the core. This is a **breaking** change set.
+
+### Added
+
+- `StarterKit`: the default extension set (used when `extensions` is null),
+  mirroring TipTap's StarterKit for a viewer. Toggle members off with per-member
+  bool flags (e.g. `StarterKit(blockquote: false)`); customize a member by
+  listing your own instance after the kit (flattening is last-wins).
+- `TiptapExtensionSet`: a base class for reusable extension bundles. Subclass it
+  to build your own set (e.g. a `Dripstone` set); sets flatten recursively, so a
+  set may contain other sets.
+- New nodes: `Heading` (per-level styles via `TiptapViewerTheme.headingStyle`),
+  `CodeBlock` (monospace, whitespace-preserving, tinted), `HorizontalRule`,
+  `HardBreak`.
+- New marks: `Code` (inline monospace) and `Link` (in StarterKit, styled but
+  non-interactive by default; add `Link(onTap: …)` after the kit to make links
+  tappable).
+- `TiptapMarkExtension.buildRecognizer`: lets a mark attach a tap recognizer
+  (used by `Link`).
+- `TiptapInlineExtension.toPlainText` / `buildFlattened`: hooks an inline
+  extension uses to contribute its flattened/plain-text form (used by `Mention`).
+- `inlineLeafText(extensions)`: builds an `inlineLeaf` hook for `toPlainText`, so
+  mentions (and other inline extensions) appear in extracted text when enabled.
+- Theme tokens: `headingStyles`, `codeBlockBackground/Padding/Radius/TextStyle`,
+  `inlineCodeStyle`, `hrColor/hrThickness/hrSpacing`, `linkColor/linkUnderline`.
+
+### Changed
+
+- `TiptapExtension` is now a `sealed`, typeless base (like TipTap's `Extension`);
+  the `type` getter moved to a new `TiptapTypedExtension` layer above
+  nodes/marks. Custom extensions keep subclassing `TiptapBlockExtension` /
+  `TiptapInlineExtension` / `TiptapMarkExtension` as before.
+- The zero-config default now renders headings, code blocks, horizontal rules,
+  hard breaks, inline code, and (non-interactive) links.
+- `TiptapNode.toPlainText()` / `TiptapDocument.toPlainText()` no longer emit
+  `@label` for mentions by default — pass an `inlineLeaf` hook (e.g. via
+  `inlineLeafText([StarterKit(), Mention()])`) to include them. This matches
+  mentions being opt-in everywhere else.
+- `Mention` moved to its own file and is no longer special-cased anywhere in the
+  renderer or model; it is now an ordinary inline extension built only from
+  public API.
+
+### Removed
+
+- `kDefaultTiptapExtensions` — use `StarterKit` (the default when `extensions`
+  is null, or list `const StarterKit()` explicitly).
+
 ## [0.0.2] - 2026-06-13
 
 Add a flattened plain/inline rendering path for compact, truncatable previews.

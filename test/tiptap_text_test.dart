@@ -98,11 +98,23 @@ void main() {
   });
 
   group('TiptapText mentions', () {
-    testWidgets('renders mentions as @label without an extension',
+    // StarterKit (the default) excludes Mention, so add it to show mentions.
+    const withMention = <TiptapExtension>[StarterKit(), Mention()];
+
+    testWidgets('drops mentions by default (StarterKit excludes Mention)',
         (tester) async {
-      // Unlike TiptapViewer, the flattened path always shows the label so a
-      // preview never silently drops a mention.
       await _pump(tester, const TiptapText(document: kKitchenSinkDoc));
+      expect(_renderedText(tester), isNot(contains('@My Course')));
+      // Surrounding text still flattens correctly.
+      expect(_renderedText(tester), contains('and a .'));
+    });
+
+    testWidgets('renders mentions as @label when Mention is supplied',
+        (tester) async {
+      await _pump(
+        tester,
+        const TiptapText(document: kKitchenSinkDoc, extensions: withMention),
+      );
       expect(_renderedText(tester), contains('@My Course'));
     });
 
@@ -114,7 +126,11 @@ void main() {
       );
       await _pump(
         tester,
-        const TiptapText(document: kKitchenSinkDoc, theme: theme),
+        const TiptapText(
+          document: kKitchenSinkDoc,
+          theme: theme,
+          extensions: withMention,
+        ),
       );
       expect(_spanStyle(tester, '@My Course')?.fontWeight, theme.mentionWeight);
       expect(_spanStyle(tester, '@My Course')?.color, theme.mentionColor);
@@ -124,7 +140,11 @@ void main() {
         (tester) async {
       await _pump(
         tester,
-        const TiptapText(document: kKitchenSinkDoc, includeStyle: false),
+        const TiptapText(
+          document: kKitchenSinkDoc,
+          includeStyle: false,
+          extensions: withMention,
+        ),
       );
       expect(_spanStyle(tester, '@My Course')?.fontWeight,
           isNot(const TiptapViewerTheme().mentionWeight));

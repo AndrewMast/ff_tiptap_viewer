@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
+import 'extensions/starter_kit.dart';
 import 'extensions/tiptap_extension.dart';
 import 'model/tiptap_document.dart';
 import 'render/tiptap_renderer.dart';
 import 'tiptap_viewer.dart';
 import 'tiptap_viewer_theme.dart';
+
+/// Default extensions for `TiptapText` previews — a `const [StarterKit()]`.
+const List<TiptapExtension> _defaultExtensions = <TiptapExtension>[StarterKit()];
 
 /// Renders TipTap JSON flattened into a single inline run — a compact,
 /// truncatable preview, rather than the block layout of [TiptapViewer].
@@ -31,9 +35,11 @@ class TiptapText extends StatelessWidget {
   /// [Map]. Malformed/empty input renders nothing.
   final Object? document;
 
-  /// Active extensions, used for marks (and mention styling). When null,
-  /// [kDefaultTiptapExtensions] is used. Block layout is irrelevant here, but
-  /// custom mark extensions are honored when [includeStyle] is true.
+  /// Active extensions, used for marks (and inline styling like mentions). When
+  /// null, a default `const [StarterKit()]` is used. Block layout is irrelevant
+  /// here, but custom mark extensions are honored when [includeStyle] is true,
+  /// and inline extensions (e.g. `Mention`) render their flattened form. Note
+  /// `StarterKit` excludes `Mention`, so add it here to show mentions.
   final List<TiptapExtension>? extensions;
 
   /// Styling surface. When null, derived via [TiptapViewerTheme.fromContext].
@@ -142,7 +148,7 @@ class TiptapText extends StatelessWidget {
     final renderer = TiptapRenderer(
       context: context,
       theme: resolvedTheme,
-      registry: TiptapRegistry(extensions ?? kDefaultTiptapExtensions),
+      registry: TiptapRegistry(extensions ?? _defaultExtensions),
     );
 
     var span = renderer.buildFlattenedSpan(

@@ -87,10 +87,25 @@ void main() {
       final text = doc.toPlainText();
       // The first paragraph's runs concatenate directly...
       expect(text, contains('Plain, bold, italic, stacked, '));
-      // ...and a mention flattens to its @label.
-      expect(text, contains('@My Course'));
       // Block siblings are joined with the default space separator.
       expect(text, contains('Quoted line. First bullet'));
+    });
+
+    test('drops mentions when no inlineLeaf hook is supplied', () {
+      final doc = TiptapDocument.parse(kKitchenSinkDoc)!;
+      final text = doc.toPlainText();
+      // Mention contributes no text by default (opt-in, like rendering)...
+      expect(text, isNot(contains('@My Course')));
+      // ...and dropping it never reshapes the surrounding run into a block-join.
+      expect(text, contains('and a .'));
+    });
+
+    test('includes mention text when the Mention extension is supplied', () {
+      final doc = TiptapDocument.parse(kKitchenSinkDoc)!;
+      final text = doc.toPlainText(
+        inlineLeaf: inlineLeafText(const <TiptapExtension>[StarterKit(), Mention()]),
+      );
+      expect(text, contains('and a @My Course.'));
     });
 
     test('honors a custom separator between blocks', () {
@@ -106,7 +121,7 @@ void main() {
       expect(doc.toPlainText(), isNot(contains('  ')));
     });
 
-    test('drops a mention with no label', () {
+    test('drops a no-label mention even when Mention is supplied', () {
       const doc = <String, dynamic>{
         'type': 'doc',
         'content': <Map<String, dynamic>>[
@@ -119,7 +134,12 @@ void main() {
           },
         ],
       };
-      expect(TiptapDocument.parse(doc)!.toPlainText(), 'Hi ');
+      expect(
+        TiptapDocument.parse(doc)!.toPlainText(
+          inlineLeaf: inlineLeafText(const <TiptapExtension>[StarterKit(), Mention()]),
+        ),
+        'Hi ',
+      );
     });
   });
 }

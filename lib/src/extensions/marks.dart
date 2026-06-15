@@ -61,3 +61,31 @@ class Strike extends TiptapMarkExtension {
   TextStyle apply(TiptapRenderer r, TiptapMark mark, TextStyle style) =>
       _addDecoration(style, TextDecoration.lineThrough);
 }
+
+/// `code` mark → inline monospace with a subtle background (theme-driven).
+///
+/// Applies the code-specific tokens (monospace family + background) on top of
+/// the run's existing style so `code` composes with bold/italic. When the host
+/// supplies an explicit [TiptapViewerTheme.inlineCodeStyle], its color and
+/// weight are honored too.
+class Code extends TiptapMarkExtension {
+  const Code();
+
+  @override
+  String get type => 'code';
+
+  @override
+  TextStyle apply(TiptapRenderer r, TiptapMark mark, TextStyle style) {
+    final t = r.theme;
+    final code = t.resolveInlineCodeStyle();
+    var result = style.copyWith(
+      fontFamily: code.fontFamily,
+      fontFamilyFallback: code.fontFamilyFallback,
+      backgroundColor: code.backgroundColor,
+    );
+    if (t.inlineCodeStyle != null) {
+      result = result.copyWith(color: code.color, fontWeight: code.fontWeight);
+    }
+    return result;
+  }
+}

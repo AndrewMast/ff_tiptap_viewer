@@ -189,7 +189,7 @@ void main() {
           document: kKitchenSinkDoc,
           selectable: false,
           extensions: <TiptapExtension>[
-            ...kDefaultTiptapExtensions,
+            const StarterKit(),
             const Mention(),
           ],
         ),
@@ -224,7 +224,7 @@ void main() {
           document: mentionOnly,
           selectable: false,
           extensions: <TiptapExtension>[
-            ...kDefaultTiptapExtensions,
+            const StarterKit(),
             Mention(onTap: (id, label) {
               tappedId = id;
               tappedLabel = label;
@@ -249,7 +249,7 @@ void main() {
           document: _mentionOnlyDoc,
           selectable: false,
           extensions: <TiptapExtension>[
-            ...kDefaultTiptapExtensions,
+            const StarterKit(),
             const Mention(),
           ],
         ),
@@ -265,7 +265,7 @@ void main() {
           document: _mentionOnlyDoc,
           selectable: false,
           extensions: <TiptapExtension>[
-            ...kDefaultTiptapExtensions,
+            const StarterKit(),
             const Mention(display: MentionDisplay.chip),
           ],
         ),
@@ -282,7 +282,7 @@ void main() {
           document: _mentionOnlyDoc,
           selectable: false,
           extensions: <TiptapExtension>[
-            ...kDefaultTiptapExtensions,
+            const StarterKit(),
             const Mention(display: MentionDisplay.plain),
           ],
         ),
@@ -304,7 +304,7 @@ void main() {
           document: _mentionOnlyDoc,
           selectable: false,
           extensions: <TiptapExtension>[
-            ...kDefaultTiptapExtensions,
+            const StarterKit(),
             Mention(
               display: MentionDisplay.chip,
               onTap: (id, label) {
@@ -326,16 +326,14 @@ void main() {
 
   group('disabled behavior', () {
     testWidgets('disabled mark degrades to plain text', (tester) async {
-      // All defaults except Bold — the bold word should render unweighted.
-      final withoutBold = kDefaultTiptapExtensions
-          .where((e) => e.type != 'bold')
-          .toList(growable: false);
+      // StarterKit with Bold toggled off — the bold word should render
+      // unweighted (and this exercises the per-member flag).
       await _pump(
         tester,
-        TiptapViewer(
+        const TiptapViewer(
           document: kKitchenSinkDoc,
           selectable: false,
-          extensions: withoutBold,
+          extensions: <TiptapExtension>[StarterKit(bold: false)],
         ),
       );
       expect(find.textContaining('bold'), findsOneWidget); // still rendered

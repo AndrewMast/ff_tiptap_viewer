@@ -1,31 +1,17 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-import 'extensions/marks.dart';
-import 'extensions/nodes.dart';
+import 'extensions/starter_kit.dart';
 import 'extensions/tiptap_extension.dart';
 import 'model/tiptap_document.dart';
 import 'render/tiptap_renderer.dart';
 import 'tiptap_viewer_theme.dart';
 
-/// The default extension set used when `TiptapViewer.extensions` is omitted.
-///
-/// Contains every supported node and mark **except** [Mention] — mentions only
-/// render when you add `Mention(onTap: …)` yourself, so a half-wired mention is
-/// never shown and mention-free content renders fully.
-const List<TiptapExtension> kDefaultTiptapExtensions = <TiptapExtension>[
-  Doc(),
-  Paragraph(),
-  TextNode(),
-  Blockquote(),
-  BulletList(),
-  OrderedList(),
-  ListItem(),
-  Bold(),
-  Italic(),
-  Underline(),
-  Strike(),
-];
+/// The default extension set used when `TiptapViewer.extensions` is omitted —
+/// a `const [StarterKit()]`. `StarterKit` bundles every supported node and mark
+/// **except** [Mention] (add `Mention(onTap: …)` yourself); links are included
+/// but non-interactive until you add a wired `Link(onTap: …)`.
+const List<TiptapExtension> _defaultExtensions = <TiptapExtension>[StarterKit()];
 
 /// Renders TipTap JSON as native Flutter widgets.
 ///
@@ -45,7 +31,7 @@ class TiptapViewer extends StatefulWidget {
   /// [Map]. Malformed/empty input renders nothing.
   final Object? document;
 
-  /// Active extensions. When null, [kDefaultTiptapExtensions] is used.
+  /// Active extensions. When null, a default `const [StarterKit()]` is used.
   final List<TiptapExtension>? extensions;
 
   /// Styling surface. When null, derived via [TiptapViewerTheme.fromContext].
@@ -113,7 +99,7 @@ class _TiptapViewerState extends State<TiptapViewer> {
 
     final theme = widget.theme ?? TiptapViewerTheme.fromContext(context);
     final registry =
-        TiptapRegistry(widget.extensions ?? kDefaultTiptapExtensions);
+        TiptapRegistry(widget.extensions ?? _defaultExtensions);
     final renderer = TiptapRenderer(
       context: context,
       theme: theme,
